@@ -1,21 +1,15 @@
 import os
-from fastapi import FastAPI, File, UploadFile
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi import FastAPI
+from dotenv import load_dotenv
+from app.middlewares import add_middleware
+from app.db import engine, Base
+from app.models import *
 
-origins = [
-    "http://localhost:3000",
-]
-
+load_dotenv()
 app = FastAPI()
+add_middleware(app)
+Base.metadata.create_all(bind=engine)
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE"],  # ระบุเฉพาะ Method ที่ต้องใช้
-    allow_headers=["Authorization", "Content-Type"],  # ระบุเฉพาะ Headers ที่ต้องใช้
-)
 
 @app.get("/api/data")
 def get_data():
