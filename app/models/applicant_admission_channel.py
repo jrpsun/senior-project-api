@@ -6,5 +6,5 @@ class ApplicantAdmissionChannel(Base):
     __tablename__ = 'Applicant_Admission_Channel'
 
     applicantId = Column(String(50), ForeignKey('Applicant_General_Information.applicantId'), primary_key=True)
-    onlineChannel = Column(String(50))
-    offlineChannel = Column(String(50))
+    onlineChannel = Column(String(50), nullable=True)
+    offlineChannel = Column(String(50), nullable=True)

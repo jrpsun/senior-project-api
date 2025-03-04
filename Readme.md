@@ -13,3 +13,14 @@ start server
 ```bash
 uvicorn main:app --host 127.0.0.1 --port 8000 --reload
 ```
+
+## How to migrate database (alembic)
+หลังจากแก้ไข models แล้ว สร้างคำสั่ง migration ด้วยคำสั่ง
+```bash
+alembic revision --autogenerate -m "message"
+```
+
+รัน migration ที่ทำการแก้ไขแล้วด้วยคำสั่ง
+```bash
+alembic upgrade head
+```

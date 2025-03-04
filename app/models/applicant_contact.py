@@ -6,8 +6,8 @@ class ApplicantContact(Base):
     __tablename__ = 'Applicant_Contact'
 
     applicantId = Column(String(50), ForeignKey('Applicant_General_Information.applicantId'), primary_key=True)
-    phoneNumber = Column(String(50))
-    email = Column(String(50))
-    line = Column(String(50))
-    facebook = Column(String(50))
-    instagram = Column(String(50))
+    phoneNumber = Column(String(50), nullable=True)
+    email = Column(String(50), nullable=True)
+    line = Column(String(50), nullable=True)
+    facebook = Column(String(50), nullable=True)
+    instagram = Column(String(50), nullable=True)

@@ -8,7 +8,7 @@ class ApplicantStatus(Base):
     __tablename__ = 'Applicant_Status'
 
     applicantId = Column(String(50), ForeignKey('Applicant_General_Information.applicantId'), primary_key=True)
-    admissionStatus = Column(String(50))
-    docStatus = Column(String(50))
-    paymentStatus = Column(String(50))
-    interviewStatus = Column(String(50))
+    admissionStatus = Column(String(50), nullable=True)
+    docStatus = Column(String(50), nullable=True)
+    paymentStatus = Column(String(50), nullable=True)
+    interviewStatus = Column(String(50), nullable=True)

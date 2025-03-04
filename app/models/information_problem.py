@@ -10,5 +10,5 @@ class InformationProblem(Base):
     problemId = Column(String(50), primary_key=True)
     educationId = Column(String(50), ForeignKey('Education_Department.educationId'))
     applicantId = Column(String(50), ForeignKey('Applicant_General_Information.applicantId'))
-    details = Column(Text)
-    updateDate = Column(DateTime)
+    details = Column(Text, nullable=True)
+    updateDate = Column(String(50), nullable=True)

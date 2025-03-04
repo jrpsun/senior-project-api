@@ -6,8 +6,8 @@ class ApplicantAdressForeigner(Base):
     __tablename__ = 'Applicant_Adress_Foreigner'
 
     applicantId = Column(String(50), ForeignKey('Applicant_General_Information.applicantId'), primary_key=True)
-    addr1 = Column(Text)
-    addr2 = Column(Text)
-    country = Column(String(50))
-    city = Column(String(50))
-    postalCode = Column(String(50))
+    addr1 = Column(Text, nullable=True)
+    addr2 = Column(Text, nullable=True)
+    country = Column(String(50), nullable=True)
+    city = Column(String(50), nullable=True)
+    postalCode = Column(String(50), nullable=True)

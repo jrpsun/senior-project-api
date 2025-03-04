@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Date
+from sqlalchemy import Column, String
 from app.db import Base
 
 
@@ -12,5 +12,5 @@ class EducationDepartment(Base):
     username = Column(String(50))
     password = Column(String(255))
     email = Column(String(50))
-    lastSeen = Column(Date)
+    lastSeen = Column(String(50), nullable=True)
     phoneNumber = Column(String(50))
