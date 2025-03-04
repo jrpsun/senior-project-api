@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Date
+from sqlalchemy import Column, String
 from app.db import Base
 
 
@@ -9,5 +9,5 @@ class Admission(Base):
     program = Column(String(255))
     roundName = Column(String(255))
     academicYear = Column(String(50))
-    startDate = Column(Date)
-    endDate = Column(Date)
+    startDate = Column(String(50))
+    endDate = Column(String(50))

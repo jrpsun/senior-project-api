@@ -8,8 +8,8 @@ class ApplicantAdditionalDocuments(Base):
     __tablename__ = 'Applicant_Additional_Documents'
 
     applicantId = Column(String(50), ForeignKey('Applicant_General_Information.applicantId'), primary_key=True)
-    stateOfPurpose = Column(LONGTEXT)
-    portfolio = Column(LONGTEXT)
-    vdo = Column(String(255))
-    resume = Column(LONGTEXT)
-    additional = Column(LONGTEXT)
+    stateOfPurpose = Column(LONGTEXT, nullable=True)
+    portfolio = Column(LONGTEXT, nullable=True)
+    vdo = Column(String(255), nullable=True)
+    resume = Column(LONGTEXT, nullable=True)
+    additional = Column(LONGTEXT, nullable=True)

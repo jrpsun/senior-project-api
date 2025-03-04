@@ -10,5 +10,5 @@ class PreliminaryEvaluation(Base):
     preEvald = Column(String(50), primary_key=True)
     applicantId = Column(String(50), ForeignKey('Applicant_General_Information.applicantId'))
     courseComId = Column(String(50), ForeignKey('Course_Committee.courseComId'))
-    preliminaryEva = Column(String(255))
-    preliminaryComment = Column(Text)
+    preliminaryEva = Column(String(255), nullable=True)
+    preliminaryComment = Column(Text, nullable=True)
