@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, ForeignKey
+from sqlalchemy import Column, String, ForeignKey, Boolean
 from app.db import Base
 from sqlalchemy.dialects.mysql import LONGTEXT
 from app.models.admission import Admission
@@ -27,6 +27,7 @@ class ApplicantGeneralInformation(Base):
     nationality = Column(String(50), nullable=True)
     birthDate = Column(String(50), nullable=True)
     livingCountry = Column(String(50), nullable=True)
+    submissionStatus = Column(Boolean, default=False)
     applicantPicture = Column(LONGTEXT, nullable=True)
     docCopyIdCard = Column(LONGTEXT, nullable=True)
     docCopyPassport = Column(LONGTEXT, nullable=True)

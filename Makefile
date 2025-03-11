@@ -1,5 +1,7 @@
-.PHONY: create-db
+VENV_DIR = venv
 
-create-db:
-	@echo "Creating database..."
-	python app/create_db.py
+
+.PHONY: run
+run:
+	$(VENV_DIR)\Scripts\activate.bat
+    uvicorn main:app --host 127.0.0.1 --port 8000 --reload

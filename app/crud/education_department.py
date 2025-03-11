@@ -37,7 +37,7 @@ def update_education_department(db: Session, edu_id: str, edu_data: EducationDep
     edu_record = db.query(EducationDepartment).filter(EducationDepartment.educationId == edu_id).first()
     if not edu_record:
         return None
-
+    
     for key, value in edu_data.model_dump(exclude_unset=True).items():
         setattr(edu_record, key, value)
 

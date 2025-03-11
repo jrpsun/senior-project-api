@@ -9,6 +9,6 @@ class ApplicantMathematicsExam(Base):
 
     applicantId = Column(String(50), ForeignKey('Applicant_General_Information.applicantId'), primary_key=True)
     mathType = Column(String(50), nullable=True)
-    score = Column(Float, nullable=True)
-    examDate = Column(String(50), nullable=True)
+    mathScore = Column(Float, nullable=True)
+    mathExamDate = Column(String(50), nullable=True)
     mathCer = Column(LONGTEXT, nullable=True)

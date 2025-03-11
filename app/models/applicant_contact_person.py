@@ -9,5 +9,5 @@ class ApplicantContactPerson(Base):
     thName = Column(String(50), nullable=True)
     enName = Column(String(50), nullable=True)
     relationship = Column(String(50), nullable=True)
-    phoneNumber = Column(String(50), nullable=True)
-    email = Column(String(50), nullable=True)
+    contactPhoneNumber = Column(String(50), nullable=True)
+    contactEmail = Column(String(50), nullable=True)

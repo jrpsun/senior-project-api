@@ -8,6 +8,10 @@ from app.routers import (
     public_relations,
     interview_committee,
     education_department,
+    course_committee,
+    admisstion,
+    applicant,
+    excel,
 )
 
 load_dotenv()
@@ -19,6 +23,11 @@ Base.metadata.create_all(bind=engine)
 app.include_router(public_relations.router, prefix="/public-relations", tags=["Public Relations"])
 app.include_router(interview_committee.router, prefix="/interview-committee", tags=["Interview Committee"])
 app.include_router(education_department.router, prefix="/education-department", tags=["Education Department"])
+app.include_router(course_committee.router, prefix="/course-committee", tags=["Course Committee"])
+app.include_router(admisstion.router, prefix="/admission", tags=["Admission"])
+app.include_router(applicant.router, prefix="/applicant", tags=["Applicant"])
+app.include_router(excel.router, prefix="/excel", tags=["Excel"])
+
 
 @app.get("/api/data")
 def get_data():
