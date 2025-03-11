@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from app.models.public_relations import PublicRelations
-from app.schemas.public_relations import PublicRelationsCreate
+from app.schemas.public_relations import PublicRelationsCreate, PublicRelationsUpdate
 
 # 🔹 Create (เพิ่ม Public Relations)
 def create_public_relation(db: Session, pr_data: PublicRelationsCreate):
@@ -27,7 +27,7 @@ def get_public_relation_by_id(db: Session, pr_id: str):
     return db.query(PublicRelations).filter(PublicRelations.PRid == pr_id).first()
 
 # 🔹 Update (แก้ไขข้อมูล)
-def update_public_relation(db: Session, pr_id: str, pr_data: PublicRelationsCreate):
+def update_public_relation(db: Session, pr_id: str, pr_data: PublicRelationsUpdate):
     pr_record = db.query(PublicRelations).filter(PublicRelations.PRid == pr_id).first()
     if not pr_record:
         return None
