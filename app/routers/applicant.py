@@ -5,6 +5,8 @@ from app.schemas.applicant import (
     ApplicantCreate,
     ApplicantGeneralInformationResponse,
     ApplicantGeneralInformationUpdate,
+    ApplicantEducationInfoResponse,
+    ApplicantEducationinfoUpdate,
 )
 from app.crud import applicant as crud
 
@@ -16,7 +18,7 @@ def create_applicant(applicant_data: ApplicantCreate, db: Session = Depends(get_
     return crud.create_applicant(db, applicant_data)
 
 
-@router.put("/{applicant_id}", response_model=ApplicantGeneralInformationResponse)
+@router.put("/general/{applicant_id}", response_model=ApplicantGeneralInformationResponse)
 def update_applicant_general_info(applicant_id: str, update_data: ApplicantGeneralInformationUpdate, db: Session = Depends(get_db)):
     updated_applicant_general = crud.update_applicant_general_info(db, applicant_id, update_data)
     if not updated_applicant_general:
@@ -24,9 +26,25 @@ def update_applicant_general_info(applicant_id: str, update_data: ApplicantGener
     return updated_applicant_general
 
 
-@router.get("/{applicant_id}", response_model=ApplicantGeneralInformationResponse)
+@router.get("/general/{applicant_id}", response_model=ApplicantGeneralInformationResponse)
 def get_applicant_general_info(applicant_id: str, db: Session = Depends(get_db)):
     applicant = crud.get_applicant_general_info(db, applicant_id)
+    if not applicant:
+        raise HTTPException(status_code=404, detail="Applicant not found")
+    return applicant
+
+
+@router.put("/education/{applicant_id}", response_model=ApplicantEducationInfoResponse)
+def update_applicant_education_info(applicant_id: str, update_data: ApplicantEducationinfoUpdate, db: Session = Depends(get_db)):
+    updated_applicant_education = crud.update_applicant_education_info(db, applicant_id, update_data)
+    if not updated_applicant_education:
+        raise HTTPException(status_code=404, detail="Applicant not found")
+    return updated_applicant_education
+
+
+@router.get("/education/{applicant_id}", response_model=ApplicantEducationInfoResponse)
+def get_applicant_education_info(applicant_id: str, db: Session = Depends(get_db)):
+    applicant = crud.get_applicant_education_info(db, applicant_id)
     if not applicant:
         raise HTTPException(status_code=404, detail="Applicant not found")
     return applicant

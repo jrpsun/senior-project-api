@@ -5,6 +5,8 @@ from app.schemas.applicant import (
     ApplicantCreate,
     ApplicantGeneralInformationUpdate,
     ApplicantGeneralInformationResponse,
+    ApplicantEducationinfoUpdate,
+    ApplicantEducationInfoResponse
 )
 
 
@@ -59,6 +61,7 @@ def create_applicant(db: Session, applicant_data: ApplicantCreate):
     return {"Message": f"Create Applicant id {applicant_data.applicantId} Success."}
 
 
+# General Information
 def update_applicant_general_info(db: Session, applicant_id: str, update_data: ApplicantGeneralInformationUpdate):
     applicant = db.query(ApplicantGeneralInformation).filter_by(applicantId=applicant_id).first()
     if not applicant:
@@ -87,7 +90,7 @@ def update_applicant_general_info(db: Session, applicant_id: str, update_data: A
     for instance in updated_instances:
         db.refresh(instance)
     
-    return {"Message": f"Updated Applicant id {applicant_id} Success."}
+    return {"Message": f"Updated General Information Applicant id {applicant_id} Success."}
 
 
 def get_applicant_general_info(db: Session, applicant_id: str):
@@ -134,3 +137,65 @@ def get_applicant_general_info(db: Session, applicant_id: str):
     return ApplicantGeneralInformationResponse(**response_data).model_dump(exclude_unset=True)
 
 
+# Education Information
+def update_applicant_education_info(db: Session, applicant_id: str, update_data: ApplicantEducationinfoUpdate):
+    applicant = db.query(ApplicantGeneralInformation).filter_by(applicantId=applicant_id).first()
+    if not applicant:
+        raise HTTPException(status_code=404, detail="Applicant not found")
+
+    update_dict = update_data.model_dump(exclude_unset=True)
+
+    models = [
+        ApplicantAcademicBackground,
+        ApplicantEnglishExam,
+        ApplicantMathematicsExam
+    ]
+
+    updated_instances = []
+
+    for model in models:
+        instance = db.query(model).filter_by(applicantId=applicant_id).first()
+        for field, value in update_dict.items():
+            if hasattr(instance, field):
+                setattr(instance, field, value)
+        updated_instances.append(instance)
+
+    db.commit()
+    for instance in updated_instances:
+        db.refresh(instance)
+    
+    return {"Message": f"Updated Education Information Applicant id {applicant_id} Success."}
+
+
+def get_applicant_education_info(db: Session, applicant_id: str):
+    query = (
+        db.query(
+            ApplicantAcademicBackground,
+            ApplicantEnglishExam,
+            ApplicantMathematicsExam
+        )
+        .outerjoin(ApplicantEnglishExam, ApplicantAcademicBackground.applicantId == ApplicantEnglishExam.applicantId)
+        .outerjoin(ApplicantMathematicsExam, ApplicantAcademicBackground.applicantId == ApplicantMathematicsExam.applicantId)
+        .filter(ApplicantAcademicBackground.applicantId == applicant_id)
+        .first()
+    )
+
+    if not query:
+        return {"Message": "Applicant not found"}
+    
+    academic, eng, math = query
+
+    response_data = {}
+
+    if academic:
+        response_data.update(academic.__dict__)
+
+    if eng:
+        response_data.update(eng.__dict__)
+        
+    if math:
+        response_data.update(math.__dict__)
+    
+    response_data.pop("_sa_instance_state", None)
+    
+    return ApplicantEducationInfoResponse(**response_data).model_dump(exclude_unset=True)
