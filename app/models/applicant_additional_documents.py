@@ -11,5 +11,5 @@ class ApplicantAdditionalDocuments(Base):
     stateOfPurpose = Column(LONGTEXT, nullable=True)
     portfolio = Column(LONGTEXT, nullable=True)
     vdo = Column(String(255), nullable=True)
-    resume = Column(LONGTEXT, nullable=True)
+    applicantResume = Column(LONGTEXT, nullable=True)
     additional = Column(LONGTEXT, nullable=True)
