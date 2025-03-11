@@ -14,7 +14,7 @@ class ApplicantBase(BaseModel):
     lastnameTH: Optional[str] = None
     firstnameEN: str
     lastnameEN: str
-    email: str
+    applicantEmail: str
 
 
 class ApplicantCreate(ApplicantBase):
@@ -41,7 +41,7 @@ class ApplicantGeneralInformationUpdate(BaseModel):
     birthDate: Optional[str] = None
     livingCountry: Optional[str] = None
     # ContactApplicant
-    applicantPhoneNumber: Optional[str] = None
+    applicantPhone: Optional[str] = None
     line: Optional[str] = None
     facebook: Optional[str] = None
     instagram: Optional[str] = None
@@ -63,8 +63,8 @@ class ApplicantGeneralInformationUpdate(BaseModel):
     thName: Optional[str] = None
     enName: Optional[str] = None
     relationship: Optional[str] = None
-    contactPhoneNumber: Optional[str] = None
-    contactEmail: Optional[str] = None
+    contactPersonPhone: Optional[str] = None
+    contactPersonEmail: Optional[str] = None
     # AdmissionChannel
     onlineChannel: Optional[str] = None
     offlineChannel: Optional[str] = None

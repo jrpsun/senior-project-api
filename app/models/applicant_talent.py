@@ -7,12 +7,12 @@ from app.models.applicant_general_information import ApplicantGeneralInformation
 class ApplicantTalent(Base):
     __tablename__ = 'Applicant_Talent'
 
-    rewardId = Column(String(50), primary_key=True)
+    talentId = Column(String(50), primary_key=True)
     applicantId = Column(String(50), ForeignKey('Applicant_General_Information.applicantId'))
     kindOfTalent = Column(String(255), nullable=True)
     nameOfCompetition = Column(String(255), nullable=True)
-    year = Column(Integer, nullable=True)
-    awards = Column(String(255), nullable=True)
+    talentYear = Column(Integer, nullable=True)
+    talentAwards = Column(String(255), nullable=True)
     url = Column(String(255), nullable=True)
     moreDetails = Column(Text, nullable=True)
     talentCer = Column(LONGTEXT, nullable=True)
