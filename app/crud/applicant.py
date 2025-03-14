@@ -30,7 +30,7 @@ def create_applicant(db: Session, applicant_data: ApplicantCreate):
 
     new_contact = ApplicantContact(
         applicantId=applicant_data.applicantId,
-        email=applicant_data.email,
+        applicantEmail=applicant_data.applicantEmail,
     )
 
     applicant_models = [
