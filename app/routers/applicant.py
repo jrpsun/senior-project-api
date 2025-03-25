@@ -7,6 +7,7 @@ from app.schemas.applicant import (
     ApplicantGeneralInformationUpdate,
     ApplicantEducationInfoResponse,
     ApplicantEducationinfoUpdate,
+    ApplicantListAdminDashboardResponse
 )
 from app.crud import applicant as crud
 
@@ -45,6 +46,15 @@ def update_applicant_education_info(applicant_id: str, update_data: ApplicantEdu
 @router.get("/education/{applicant_id}", response_model=ApplicantEducationInfoResponse)
 def get_applicant_education_info(applicant_id: str, db: Session = Depends(get_db)):
     applicant = crud.get_applicant_education_info(db, applicant_id)
+    if not applicant:
+        raise HTTPException(status_code=404, detail="Applicant not found")
+    return applicant
+
+
+@router.get("/admin-dashboard", response_model=ApplicantListAdminDashboardResponse)
+def get_all_applicant_for_admin_dashboard(db: Session = Depends(get_db)):
+    applicant = crud.get_all_applicant_for_admin_dashboard(db)
+    print("applicantJaa:0", applicant)
     if not applicant:
         raise HTTPException(status_code=404, detail="Applicant not found")
     return applicant
