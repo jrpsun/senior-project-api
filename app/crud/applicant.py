@@ -6,7 +6,9 @@ from app.schemas.applicant import (
     ApplicantGeneralInformationUpdate,
     ApplicantGeneralInformationResponse,
     ApplicantEducationinfoUpdate,
-    ApplicantEducationInfoResponse
+    ApplicantEducationInfoResponse,
+    ApplicantAdminDashboardResponse,
+    ApplicantListAdminDashboardResponse,
 )
 
 
@@ -30,7 +32,7 @@ def create_applicant(db: Session, applicant_data: ApplicantCreate):
 
     new_contact = ApplicantContact(
         applicantId=applicant_data.applicantId,
-        email=applicant_data.email,
+        applicantEmail=applicant_data.applicantEmail,
     )
 
     applicant_models = [
@@ -199,3 +201,46 @@ def get_applicant_education_info(db: Session, applicant_id: str):
     response_data.pop("_sa_instance_state", None)
     
     return ApplicantEducationInfoResponse(**response_data).model_dump(exclude_unset=True)
+
+
+# DashBoard Admin
+def get_all_applicant_for_admin_dashboard(db: Session):
+    query = (
+        db.query(
+            ApplicantGeneralInformation,
+            ApplicantContact,
+            ApplicantStatus,
+            Admission
+        )
+        .outerjoin(ApplicantContact, ApplicantGeneralInformation.applicantId == ApplicantContact.applicantId)
+        .outerjoin(ApplicantStatus, ApplicantGeneralInformation.applicantId == ApplicantStatus.applicantId)
+        .outerjoin(Admission, ApplicantGeneralInformation.programRegistered == Admission.admissionId)
+    ).all()
+
+    print("query:", query)
+
+    if not query:
+        return {"Message": "Applicant not found"}
+    
+    response_list = []
+    for general, contact, status, admit in query:
+        response_data = {}
+
+        if general:
+            response_data.update(general.__dict__)
+
+        if contact:
+            response_data.update(contact.__dict__)
+
+        if status:
+            response_data.update(status.__dict__)
+
+        if admit:
+            response_data.update(admit.__dict__)
+
+        response_list.append(ApplicantAdminDashboardResponse(**response_data).model_dump(exclude_unset=True))
+
+    return ApplicantListAdminDashboardResponse(applicants=response_list)
+
+
+    

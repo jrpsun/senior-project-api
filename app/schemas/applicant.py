@@ -123,3 +123,21 @@ class ApplicantEducationInfoResponse(ApplicantEducationinfoUpdate):
     
     class Config:
         from_attributes = True
+
+
+class ApplicantAdminDashboardResponse(BaseModel):
+    applicantId: Optional[str] = None
+    applicantName: Optional[str] = None
+    programRegistered: Optional[str] = None
+    program: Optional[str] = None
+    submissionStatus: Optional[bool] = None
+    docStatus: Optional[str] = None
+    paymentStatus: Optional[str] = None
+    applicantEmail: Optional[str] = None
+    applicantPhone: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+class ApplicantListAdminDashboardResponse(BaseModel):
+    applicants: list[ApplicantAdminDashboardResponse]
