@@ -35,13 +35,13 @@ class OCRProcessor:
             return None
     
     @staticmethod
-    def ocr_tesseract(image_bytes):
+    def ocr_tesseract(image_bytes, lang: str):
         load_dotenv()
         pytesseract.pytesseract.tesseract_cmd = os.getenv("TESSERACT_CMD")
         try:
             image = Image.open(io.BytesIO(image_bytes))
 
-            text = pytesseract.image_to_string(image, lang="tha+eng")
+            text = pytesseract.image_to_string(image, lang=lang)
 
             return text.strip()
         except Exception as e:
@@ -262,5 +262,50 @@ class OCRProcessor:
         # ทำ OCR
         ocr_result = OCRProcessor.perform_ocr(cropped_image)
         return ocr_result
+
+
+    @staticmethod
+    def crop_top_third(image_bytes, save_path=None):
+        # แปลง bytes เป็นรูปภาพ
+        image = Image.open(io.BytesIO(image_bytes))
+        
+        # คำนวณความสูงของรูป
+        width, height = image.size
+        crop_height = height // 3.5
+        
+        # ตัดรูปจากด้านบน 1/3
+        cropped_image = image.crop((0, 0, width, crop_height))
+        
+        # บันทึกรูปภาพลงเครื่อง (ถ้ามี save_path)
+        if save_path:
+            # สร้างโฟลเดอร์ถ้ายังไม่มี
+            os.makedirs(os.path.dirname(save_path), exist_ok=True)
+            cropped_image.save(save_path)
+        
+        # แปลงรูปกลับเป็น bytes
+        byte_arr = io.BytesIO()
+        cropped_image.save(byte_arr, format=image.format)
+        
+        return byte_arr.getvalue()
+    
+    @staticmethod
+    def crop_without_top_bottom_third(image_bytes, save_path=None):
+        image = Image.open(io.BytesIO(image_bytes))
+        
+        width, height = image.size
+        
+        start_y = height // 5
+        end_y = height * 3 // 5
+
+        cropped_image = image.crop((0, start_y, width, end_y))
+        
+        if save_path:
+            os.makedirs(os.path.dirname(save_path), exist_ok=True)
+            cropped_image.save(save_path)
+        
+        byte_arr = io.BytesIO()
+        cropped_image.save(byte_arr, format=image.format)
+        
+        return byte_arr.getvalue()
         
 
