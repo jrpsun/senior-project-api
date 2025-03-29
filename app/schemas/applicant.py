@@ -42,6 +42,7 @@ class ApplicantGeneralInformationUpdate(BaseModel):
     livingCountry: Optional[str] = None
     # ContactApplicant
     applicantPhone: Optional[str] = None
+    applicantEmail: Optional[str] = None
     line: Optional[str] = None
     facebook: Optional[str] = None
     instagram: Optional[str] = None
@@ -60,20 +61,87 @@ class ApplicantGeneralInformationUpdate(BaseModel):
     country: Optional[str] = None
     city: Optional[str] = None
     # ContactPerson
-    thName: Optional[str] = None
-    enName: Optional[str] = None
+    contactFirstNameTH: Optional[str] = None
+    contactMiddleNameTH: Optional[str] = None
+    contactLastNameTH: Optional[str] = None
+    contactFirstNameEN: Optional[str] = None
+    contactMiddleNameEN: Optional[str] = None
+    contactLastNameEN: Optional[str] = None
     relationship: Optional[str] = None
-    contactPersonPhone: Optional[str] = None
-    contactPersonEmail: Optional[str] = None
+    contactPhone: Optional[str] = None
+    contactEmail: Optional[str] = None
     # AdmissionChannel
     onlineChannel: Optional[str] = None
     offlineChannel: Optional[str] = None
 
 
-class ApplicantGeneralInformationResponse(ApplicantGeneralInformationUpdate):
-    
-    class Config:
-        from_attributes = True
+class GeneralInfoWithAddress(BaseModel):
+    # GeneralInfo
+    nationality: Optional[str] = None
+    idCardNumber: Optional[str] = None
+    passportId: Optional[str] = None
+    prefix: Optional[str] = None
+    firstnameTH: Optional[str] = None
+    lastnameTH: Optional[str] = None
+    firstnameEN: Optional[str] = None
+    lastnameEN: Optional[str] = None
+    idCardExpDate: Optional[str] = None
+    passportExpDate: Optional[str] = None
+    gender: Optional[str] = None
+    middlenameTH: Optional[str] = None
+    middlenameEN: Optional[str] = None
+    nicknameTH: Optional[str] = None
+    nicknameEN: Optional[str] = None
+    birthDate: Optional[str] = None
+    livingCountry: Optional[str] = None
+
+    # AddressInfo
+    houseNumber: Optional[str] = None
+    moo: Optional[str] = None
+    subDistrict: Optional[str] = None
+    district: Optional[str] = None
+    province: Optional[str] = None
+    postalCode: Optional[str] = None
+    village: Optional[str] = None
+    soi: Optional[str] = None
+    street: Optional[str] = None
+    addr1: Optional[str] = None
+    addr2: Optional[str] = None
+    country: Optional[str] = None
+    city: Optional[str] = None
+
+
+class ContactInfo(BaseModel):
+    applicantPhone: Optional[str] = None
+    applicantEmail: Optional[str] = None
+    line: Optional[str] = None
+    facebook: Optional[str] = None
+    instagram: Optional[str] = None
+
+
+class EmergencyContact(BaseModel):
+    contactFirstNameTH: Optional[str] = None
+    contactMiddleNameTH: Optional[str] = None
+    contactLastNameTH: Optional[str] = None
+    contactFirstNameEN: Optional[str] = None
+    contactMiddleNameEN: Optional[str] = None
+    contactLastNameEN: Optional[str] = None
+    relationship: Optional[str] = None
+    contactPhone: Optional[str] = None
+    contactEmail: Optional[str] = None
+
+
+class AdmissionChannel(BaseModel):
+    onlineChannel: Optional[str] = None
+    offlineChannel: Optional[str] = None
+
+
+class ApplicantGeneralInformationResponse(BaseModel):
+    general_info: GeneralInfoWithAddress
+    contact_info: ContactInfo
+    emergency_contact: EmergencyContact
+    admission_channel: AdmissionChannel
+
 
 
 class ApplicantEducationinfoUpdate(BaseModel):
