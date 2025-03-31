@@ -40,6 +40,7 @@ class ApplicantGeneralInformationUpdate(BaseModel):
     nicknameEN: Optional[str] = None
     birthDate: Optional[str] = None
     livingCountry: Optional[str] = None
+    applicantPicture: Optional[str] = None
     # ContactApplicant
     applicantPhone: Optional[str] = None
     applicantEmail: Optional[str] = None
@@ -94,6 +95,9 @@ class GeneralInfoWithAddress(BaseModel):
     nicknameEN: Optional[str] = None
     birthDate: Optional[str] = None
     livingCountry: Optional[str] = None
+    applicantPicture: Optional[str] = None
+    docCopyIdCard: Optional[str] = None
+    docCopyPassport: Optional[str] = None
 
     # AddressInfo
     houseNumber: Optional[str] = None

@@ -75,6 +75,12 @@ def update_applicant_general_info(db: Session, applicant_id: str, update_data: A
 
     update_dict = update_data.model_dump(exclude_unset=True)
 
+    # แปลง base64 เป็น binary data ถ้ามีรูปภาพ
+    if 'applicantPicture' in update_dict and update_dict['applicantPicture']:
+        # เอา prefix "data:image/...;base64," ออกถ้ามี
+        if ',' in update_dict['applicantPicture']:
+            update_dict['applicantPicture'] = update_dict['applicantPicture'].split(',')[1]
+
     models = [
         ApplicantGeneralInformation,
         ApplicantContact,
@@ -167,6 +173,11 @@ def get_applicant_general_info(db: Session, applicant_id: str):
 
     # ลบ _sa_instance_state และ applicantId ออกจาก dictionary
     general_info_dict = {k: v for k, v in general_info.__dict__.items() if k not in ('_sa_instance_state', 'applicantId')} if general_info else {}
+    
+    # ถ้ามีรูปภาพ ให้ส่งเป็น base64
+    if hasattr(general_info, 'applicantPicture') and general_info.applicantPicture:
+        general_info_dict['applicantPicture'] = general_info.applicantPicture
+
     address_dict = {k: v for k, v in address.__dict__.items() if k not in ('_sa_instance_state', 'applicantId')} if address else {}
 
     # รวมข้อมูลของ GeneralInfo และ AddressInfo
