@@ -2,6 +2,7 @@ from sqlalchemy.orm import Session
 from fastapi import HTTPException
 from app.models import *
 from app.schemas.applicant import (
+    AdmissionChannel,
     ApplicantCreate,
     ApplicantGeneralInformationUpdate,
     ApplicantGeneralInformationResponse,
@@ -9,6 +10,9 @@ from app.schemas.applicant import (
     ApplicantEducationInfoResponse,
     ApplicantAdminDashboardResponse,
     ApplicantListAdminDashboardResponse,
+    ContactInfo,
+    EmergencyContact,
+    GeneralInfoWithAddress,
 )
 
 
@@ -71,6 +75,12 @@ def update_applicant_general_info(db: Session, applicant_id: str, update_data: A
 
     update_dict = update_data.model_dump(exclude_unset=True)
 
+    # แปลง base64 เป็น binary data ถ้ามีรูปภาพ
+    if 'applicantPicture' in update_dict and update_dict['applicantPicture']:
+        # เอา prefix "data:image/...;base64," ออกถ้ามี
+        if ',' in update_dict['applicantPicture']:
+            update_dict['applicantPicture'] = update_dict['applicantPicture'].split(',')[1]
+
     models = [
         ApplicantGeneralInformation,
         ApplicantContact,
@@ -95,6 +105,50 @@ def update_applicant_general_info(db: Session, applicant_id: str, update_data: A
     return {"Message": f"Updated General Information Applicant id {applicant_id} Success."}
 
 
+# def get_applicant_general_info(db: Session, applicant_id: str):
+#     query = (
+#         db.query(
+#             ApplicantGeneralInformation,
+#             ApplicantContact,
+#             ApplicantAddress,
+#             ApplicantContactPerson,
+#             ApplicantAdmissionChannel,
+#         )
+#         .outerjoin(ApplicantContact, ApplicantGeneralInformation.applicantId == ApplicantContact.applicantId)
+#         .outerjoin(ApplicantAddress, ApplicantGeneralInformation.applicantId == ApplicantAddress.applicantId)
+#         .outerjoin(ApplicantContactPerson, ApplicantGeneralInformation.applicantId == ApplicantContactPerson.applicantId)
+#         .outerjoin(ApplicantAdmissionChannel, ApplicantGeneralInformation.applicantId == ApplicantAdmissionChannel.applicantId)
+#         .filter(ApplicantGeneralInformation.applicantId == applicant_id)
+#         .first()
+#     )
+
+#     if not query:
+#         return {"Message": "Applicant not found"}
+
+#     general_info, contact, address, contact_person, admission_channel = query
+
+#     response_data = {}
+
+#     if general_info:
+#         response_data.update(general_info.__dict__)
+
+#     if contact:
+#         response_data.update(contact.__dict__)
+
+#     if address:
+#         response_data.update(address.__dict__)
+
+#     if contact_person:
+#         response_data.update(contact_person.__dict__)
+
+#     if admission_channel:
+#         response_data.update(admission_channel.__dict__)
+
+#     response_data.pop("_sa_instance_state", None)
+
+#     return ApplicantGeneralInformationResponse(**response_data).model_dump(exclude_unset=True)
+
+
 def get_applicant_general_info(db: Session, applicant_id: str):
     query = (
         db.query(
@@ -113,30 +167,32 @@ def get_applicant_general_info(db: Session, applicant_id: str):
     )
 
     if not query:
-        return {"Message": "Applicant not found"}
+        return None
 
     general_info, contact, address, contact_person, admission_channel = query
 
-    response_data = {}
+    # ลบ _sa_instance_state และ applicantId ออกจาก dictionary
+    general_info_dict = {k: v for k, v in general_info.__dict__.items() if k not in ('_sa_instance_state', 'applicantId')} if general_info else {}
+    
+    # ถ้ามีรูปภาพ ให้ส่งเป็น base64
+    if hasattr(general_info, 'applicantPicture') and general_info.applicantPicture:
+        general_info_dict['applicantPicture'] = general_info.applicantPicture
 
-    if general_info:
-        response_data.update(general_info.__dict__)
+    address_dict = {k: v for k, v in address.__dict__.items() if k not in ('_sa_instance_state', 'applicantId')} if address else {}
 
-    if contact:
-        response_data.update(contact.__dict__)
+    # รวมข้อมูลของ GeneralInfo และ AddressInfo
+    general_info_with_address = GeneralInfoWithAddress(
+        **general_info_dict,
+        **address_dict,
+        applicantId=applicant_id  # ส่ง applicantId แยกต่างหาก
+    )
 
-    if address:
-        response_data.update(address.__dict__)
-
-    if contact_person:
-        response_data.update(contact_person.__dict__)
-
-    if admission_channel:
-        response_data.update(admission_channel.__dict__)
-
-    response_data.pop("_sa_instance_state", None)
-
-    return ApplicantGeneralInformationResponse(**response_data).model_dump(exclude_unset=True)
+    return ApplicantGeneralInformationResponse(
+        general_info=general_info_with_address,
+        contact_info=ContactInfo(**contact.__dict__) if contact else ContactInfo(),
+        emergency_contact=EmergencyContact(**contact_person.__dict__) if contact_person else EmergencyContact(),
+        admission_channel=AdmissionChannel(**admission_channel.__dict__) if admission_channel else AdmissionChannel(),
+    )
 
 
 # Education Information

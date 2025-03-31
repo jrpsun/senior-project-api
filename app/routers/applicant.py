@@ -19,7 +19,7 @@ def create_applicant(applicant_data: ApplicantCreate, db: Session = Depends(get_
     return crud.create_applicant(db, applicant_data)
 
 
-@router.put("/general/{applicant_id}", response_model=ApplicantGeneralInformationResponse)
+@router.put("/general/{applicant_id}")
 def update_applicant_general_info(applicant_id: str, update_data: ApplicantGeneralInformationUpdate, db: Session = Depends(get_db)):
     updated_applicant_general = crud.update_applicant_general_info(db, applicant_id, update_data)
     if not updated_applicant_general:
