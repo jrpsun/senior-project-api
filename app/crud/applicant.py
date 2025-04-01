@@ -273,8 +273,6 @@ def get_all_applicant_for_admin_dashboard(db: Session):
         .outerjoin(Admission, ApplicantGeneralInformation.programRegistered == Admission.admissionId)
     ).all()
 
-    print("query:", query)
-
     if not query:
         return {"Message": "Applicant not found"}
     

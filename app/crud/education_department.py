@@ -1,8 +1,14 @@
 from sqlalchemy.orm import Session
 from app.models.education_department import EducationDepartment
+from app.models.applicant_general_information import ApplicantGeneralInformation
+from app.models.applicant_contact import ApplicantContact
+from app.models.applicant_status import ApplicantStatus
+from app.models.admission import Admission
 from app.schemas.education_department import (
     EducationDepartmentCreate,
     EducationDepartmentUpdate,
+    EduApplicantDataMainPageResponse,
+    EduListApplicantDataMainPageResponse,
 )
 from datetime import datetime
 
@@ -52,3 +58,40 @@ def delete_education_department(db: Session, edu_id: str):
         db.delete(edu_record)
         db.commit()
     return edu_record
+
+
+def get_all_applicants_edu_main_page(db: Session):
+    query = (
+        db.query(
+            ApplicantGeneralInformation,
+            ApplicantContact,
+            ApplicantStatus,
+            Admission
+        )
+        .outerjoin(ApplicantContact, ApplicantGeneralInformation.applicantId == ApplicantContact.applicantId)
+        .outerjoin(ApplicantStatus, ApplicantGeneralInformation.applicantId == ApplicantStatus.applicantId)
+        .outerjoin(Admission, ApplicantGeneralInformation.programRegistered == Admission.admissionId)
+    ).all()
+
+    if not query:
+        return {"Message": "Applicant not found"}
+    
+    response_list = []
+    for general, contact, status, admit in query:
+        response_data = {}
+
+        if general:
+            response_data.update(general.__dict__)
+
+        if contact:
+            response_data.update(contact.__dict__)
+
+        if status:
+            response_data.update(status.__dict__)
+
+        if admit:
+            response_data.update(admit.__dict__)
+
+        response_list.append(EduApplicantDataMainPageResponse(**response_data).model_dump(exclude_unset=True))
+
+    return EduListApplicantDataMainPageResponse(applicants=response_list)
