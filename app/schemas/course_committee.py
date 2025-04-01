@@ -31,3 +31,26 @@ class CourseCommitteeResponse(CourseCommitteeBase):
 
     class Config:
         from_attributes = True
+
+
+class CourseApplicantDataMainPageResponse(BaseModel):
+    roundName: Optional[str] = None
+    applicantId: Optional[str] = None
+    firstnameEN: Optional[str] = None
+    lastnameEN: Optional[str] = None
+    program: Optional[str] = None
+    admissionStatus: Optional[str] = None
+    docStatus: Optional[str] = None
+    # course committee
+    prefix: Optional[str] = None
+    firstName: Optional[str] = None
+    lastName: Optional[str] = None
+
+   # preEvaDate : Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
+class CourseListApplicantDataMainPageResponse(BaseModel):
+    applicants: list[CourseApplicantDataMainPageResponse]

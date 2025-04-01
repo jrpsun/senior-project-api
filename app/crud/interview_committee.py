@@ -1,8 +1,15 @@
 from sqlalchemy.orm import Session
 from app.models.interview_committee import InterviewCommittee
+from app.models.applicant_general_information import ApplicantGeneralInformation
+from app.models.interview_evaluation import InterviewEvaluation
+from app.models.applicant_status import ApplicantStatus
+from app.models.interview_committee import InterviewCommittee
+from app.models.admission import Admission
 from app.schemas.interview_committee import (
     InterviewCommitteeCreate,
-    InterviewCommitteeUpdate
+    InterviewCommitteeUpdate,
+    InterviewApplicantDataMainPageResponse,
+    InterviewListApplicantDataMainPageResponse
 )
 from datetime import datetime
 
@@ -52,3 +59,45 @@ def delete_interview_committee(db: Session, ic_id: str):
         db.delete(ic_record)
         db.commit()
     return ic_record
+
+
+def get_all_applicants_interview_main_page(db: Session):
+    query = (
+        db.query(
+            InterviewEvaluation,
+            InterviewCommittee,
+            ApplicantStatus,
+            Admission,
+            ApplicantGeneralInformation
+        )
+        .outerjoin(InterviewCommittee, InterviewEvaluation.interviewComId == InterviewCommittee.interviewComId)
+        .outerjoin(ApplicantGeneralInformation, InterviewEvaluation.applicantId == ApplicantGeneralInformation.applicantId)
+        .outerjoin(Admission, ApplicantGeneralInformation.programRegistered == Admission.admissionId)
+        .outerjoin(ApplicantStatus, ApplicantGeneralInformation.applicantId == ApplicantStatus.applicantId)
+    ).all()
+
+    if not query:
+        return {"Message": "Applicant not found"}
+    
+    response_list = []
+    for general, interviewEva, status, interviewC, admit in query:
+        response_data = {}
+
+        if general:
+            response_data.update(general.__dict__)
+
+        if interviewEva:
+            response_data.update(interviewEva.__dict__)
+
+        if status:
+            response_data.update(status.__dict__)
+
+        if interviewC:
+            response_data.update(interviewC.__dict__)
+
+        if admit:
+            response_data.update(admit.__dict__)
+
+        response_list.append(InterviewApplicantDataMainPageResponse(**response_data).model_dump(exclude_unset=True))
+
+    return InterviewListApplicantDataMainPageResponse(applicants=response_list)

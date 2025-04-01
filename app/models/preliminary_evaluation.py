@@ -12,3 +12,4 @@ class PreliminaryEvaluation(Base):
     courseComId = Column(String(50), ForeignKey('Course_Committee.courseComId'))
     preliminaryEva = Column(String(255), nullable=True)
     preliminaryComment = Column(Text, nullable=True)
+    preEvaDate = Column(String(255), nullable=True)

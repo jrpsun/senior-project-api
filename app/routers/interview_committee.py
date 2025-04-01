@@ -5,8 +5,11 @@ from app.crud import interview_committee as crud
 from app.schemas.interview_committee import (
     InterviewCommitteeCreate,
     InterviewCommitteeResponse,
-    InterviewCommitteeUpdate
+    InterviewCommitteeUpdate,
+    InterviewListApplicantDataMainPageResponse
 )
+
+
 router = APIRouter()
 
 
@@ -15,12 +18,12 @@ def create_ic(ic_data: InterviewCommitteeCreate, db: Session = Depends(get_db)):
     return crud.create_interview_committee(db, ic_data)
 
 
-@router.get("/", response_model=list[InterviewCommitteeResponse])
+@router.get("/get-all-interviewC", response_model=list[InterviewCommitteeResponse])
 def read_ics(db: Session = Depends(get_db)):
     return crud.get_interview_committees(db)
 
 
-@router.get("/{ic_id}", response_model=InterviewCommitteeResponse)
+@router.get("/get-interviewC/{ic_id}", response_model=InterviewCommitteeResponse)
 def read_ic(ic_id: str, db: Session = Depends(get_db)):
     ic = crud.get_interview_committee_by_id(db, ic_id)
     if not ic:
@@ -28,7 +31,7 @@ def read_ic(ic_id: str, db: Session = Depends(get_db)):
     return ic
 
 
-@router.put("/{ic_id}", response_model=InterviewCommitteeResponse)
+@router.put("/update-interviewC/{ic_id}", response_model=InterviewCommitteeResponse)
 def update_ic(ic_id: str, ic_data: InterviewCommitteeUpdate, db: Session = Depends(get_db)):
     updated_ic = crud.update_interview_committee(db, ic_id, ic_data)
     if not updated_ic:
@@ -36,9 +39,17 @@ def update_ic(ic_id: str, ic_data: InterviewCommitteeUpdate, db: Session = Depen
     return updated_ic
 
 
-@router.delete("/{ic_id}")
+@router.delete("/delete-interviewC/{ic_id}")
 def delete_ic(ic_id: str, db: Session = Depends(get_db)):
     deleted_ic = crud.delete_interview_committee(db, ic_id)
     if not deleted_ic:
         raise HTTPException(status_code=404, detail="InterviewCommittee not found")
     return {"message": "InterviewCommittee deleted successfully"}
+
+
+@router.get("/all-applicant-interviewC", response_model=InterviewListApplicantDataMainPageResponse)
+def read_all_applicants(db: Session = Depends(get_db)):
+    read_all_applicants = crud.get_all_applicants_interview_main_page(db)
+    if not read_all_applicants:
+        raise HTTPException(status_code=404, detail="Applicant Information not found")
+    return read_all_applicants

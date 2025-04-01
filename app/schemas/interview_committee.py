@@ -31,3 +31,26 @@ class InterviewCommitteeResponse(InterviewCommitteeBase):
 
     class Config:
         from_attributes = True
+
+
+class InterviewApplicantDataMainPageResponse(BaseModel):
+    roundName: Optional[str] = None
+    applicantId: Optional[str] = None
+    firstnameEN: Optional[str] = None
+    lastnameEN: Optional[str] = None
+    program: Optional[str] = None
+    admissionStatus: Optional[str] = None
+    docStatus: Optional[str] = None
+    interviewRoom: Optional[str] = None
+    prefix: Optional[str] = None
+    firstName: Optional[str] = None
+    lastName: Optional[str] = None
+    interviewDate: Optional[str] = None 
+    interviewTime: Optional[str] = None 
+
+    class Config:
+        from_attributes = True
+
+
+class InterviewListApplicantDataMainPageResponse(BaseModel):
+    applicants: list[InterviewApplicantDataMainPageResponse]

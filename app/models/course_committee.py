@@ -14,3 +14,5 @@ class CourseCommittee(Base):
     email = Column(String(50))
     lastSeen = Column(String(50), nullable=True)
     phoneNumber = Column(String(50))
+
+    # edit by fill courseCom in front of prefix, first, last 
