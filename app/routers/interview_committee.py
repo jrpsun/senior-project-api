@@ -69,10 +69,7 @@ def update_interview_Eva(
     result: str, er: str, pr: str, ir: str, cr: str, tr: str,
     db: Session = Depends(get_db)
     ):
-    update_interview_Eva = crud.update_interview_eva_to_applicant(
-        db, app_id: str, com_id: str, e_score: int, p_score: int, i_score: int, c_score: int, t_score: int, comment: str,
-        result: str, er: str, pr: str, ir: str, cr: str, tr: str
-    )
+    update_interview_Eva = crud.update_interview_eva_to_applicant(db, app_id, com_id, e_score, p_score, i_score, c_score, t_score, comment, result, er, pr, ir, cr, tr)
     if not update_interview_Eva:
         raise HTTPException(status_code=404, detail="Not found applicant id {app_id}")
     return update_interview_Eva

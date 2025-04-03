@@ -79,7 +79,7 @@ class InterviewEvaPageResponse(BaseModel):
     totalRemark : Optional[str] = None
     comment: Optional[str] = None
 
-        class Config:
+    class Config:
         from_attributes = True
 
 
