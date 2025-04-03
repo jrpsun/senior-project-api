@@ -3,6 +3,7 @@ from app.db import Base
 from sqlalchemy.dialects.mysql import LONGTEXT
 from app.models.applicant_general_information import ApplicantGeneralInformation
 from app.models.interview_committee import InterviewCommittee
+from app.models.interview_round import InterviewRound
 
 
 class InterviewEvaluation(Base):
@@ -11,6 +12,7 @@ class InterviewEvaluation(Base):
     interviewEvald = Column(String(50), primary_key=True)
     interviewComId = Column(String(50), ForeignKey('Interview_Committee.interviewComId'))
     applicantId = Column(String(50), ForeignKey('Applicant_General_Information.applicantId'))
+    interviewRoundId = Column(String(50), ForeignKey('Interview_Round.interviewRoundId'))
     englishScore = Column(Integer, nullable=True)
     personalityScore = Column(Integer, nullable=True)
     intensionScore = Column(Integer, nullable=True)

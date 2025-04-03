@@ -66,7 +66,7 @@ def get_pre_eva_info(applican_id: str, db: Session = Depends(get_db)):
 
 @router.put("/update-pre-Eva")
 def update_pre_Eva(app_id: str, com_id: str, preEvaResult: str, comment: str, db: Session = Depends(get_db)):
-    update_pre_Eva = crud.update_pre_eva_to_applicant(db, app_id: str, com_id: str, preEvaResult: str, comment: str)
+    update_pre_Eva = crud.update_pre_eva_to_applicant(db, app_id, com_id, preEvaResult, comment)
     if not update_pre_Eva:
         raise HTTPException(status_code=404, detail="Not found applicant id {app_id}")
     return update_pre_Eva

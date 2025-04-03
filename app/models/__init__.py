@@ -21,7 +21,7 @@ from .interview_committee import InterviewCommittee
 from .interview_evaluation import InterviewEvaluation
 from .course_committee import CourseCommittee
 from .preliminary_evaluation import PreliminaryEvaluation
-
+from .interview_round import InterviewRound
 
 __all__ = [
     "ApplicantGeneralInformation",
@@ -46,5 +46,6 @@ __all__ = [
     "InterviewCommittee",
     "InterviewEvaluation",
     "CourseCommittee",
-    "PreliminaryEvaluation"
+    "PreliminaryEvaluation",
+    "InterviewRound"
 ]
