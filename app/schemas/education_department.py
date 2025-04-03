@@ -52,4 +52,3 @@ class EduApplicantDataMainPageResponse(BaseModel):
 
 class EduListApplicantDataMainPageResponse(BaseModel):
     applicants: list[EduApplicantDataMainPageResponse]
-

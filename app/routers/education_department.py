@@ -53,3 +53,10 @@ def read_all_applicants(db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Applicant Information not found")
     return read_all_applicants
 
+
+@router.put("/update-edu-preEva")
+def update_edu_preEva(app_id: list[str], com_id: list[str], db: Session = Depends(get_db)):
+    updated_edu_preEva = crud.update_courseC_to_applicant(db, app_id, com_id)
+    if not updated_edu_preEva:
+        raise HTTPException(status_code=404, detail="Education Department not found")
+    return updated_edu_preEva

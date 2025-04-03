@@ -48,6 +48,7 @@ def create_applicant(db: Session, applicant_data: ApplicantCreate):
         ApplicantMathematicsExam,
         ApplicantAdditionalDocuments,
         ApplicantStatus,
+        PreliminaryEvaluation
     ]
 
     new_records = [model(applicantId=applicant_data.applicantId) for model in applicant_models]
