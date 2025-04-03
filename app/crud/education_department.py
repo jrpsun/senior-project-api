@@ -4,11 +4,12 @@ from app.models.applicant_general_information import ApplicantGeneralInformation
 from app.models.applicant_contact import ApplicantContact
 from app.models.applicant_status import ApplicantStatus
 from app.models.admission import Admission
+from app.models.preliminary_evaluation import PreliminaryEvaluation
 from app.schemas.education_department import (
     EducationDepartmentCreate,
     EducationDepartmentUpdate,
     EduApplicantDataMainPageResponse,
-    EduListApplicantDataMainPageResponse,
+    EduListApplicantDataMainPageResponse
 )
 from datetime import datetime
 
@@ -73,6 +74,7 @@ def get_all_applicants_edu_main_page(db: Session):
         .outerjoin(Admission, ApplicantGeneralInformation.programRegistered == Admission.admissionId)
     ).all()
 
+    print(query)
     if not query:
         return {"Message": "Applicant not found"}
     
@@ -95,3 +97,12 @@ def get_all_applicants_edu_main_page(db: Session):
         response_list.append(EduApplicantDataMainPageResponse(**response_data).model_dump(exclude_unset=True))
 
     return EduListApplicantDataMainPageResponse(applicants=response_list)
+
+
+def update_courseC_to_applicant(db: Session, app_id: list[str], com_id: list[str]):
+    for i in range(len(app_id)):
+        update_preEva = db.query(PreliminaryEvaluation).filter(PreliminaryEvaluation.applicantId == app_id[i]).update({"courseComId": com_id[i]}, synchronize_session=False)
+    
+    db.commit()
+    
+    return update_preEva

@@ -41,12 +41,10 @@ class CourseApplicantDataMainPageResponse(BaseModel):
     program: Optional[str] = None
     admissionStatus: Optional[str] = None
     docStatus: Optional[str] = None
-    # course committee
     prefix: Optional[str] = None
     firstName: Optional[str] = None
     lastName: Optional[str] = None
-
-   # preEvaDate : Optional[str] = None
+    preEvaDate : Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -54,3 +52,15 @@ class CourseApplicantDataMainPageResponse(BaseModel):
 
 class CourseListApplicantDataMainPageResponse(BaseModel):
     applicants: list[CourseApplicantDataMainPageResponse]
+
+
+class PreEvaPageResponse(BaseModel):
+    applicantId: Optional[str] = None
+    firstnameEN: Optional[str] = None
+    lastnameEN: Optional[str] = None
+    comPrefix: Optional[str] = None
+    firstName: Optional[str] = None
+    lastName: Optional[str] = None
+    preEvaDate: Optional[str] = None
+    preliminaryEva: Optional[str] = None
+    preliminaryComment: Optional[str] = None

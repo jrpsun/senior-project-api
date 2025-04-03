@@ -47,6 +47,7 @@ class InterviewApplicantDataMainPageResponse(BaseModel):
     lastName: Optional[str] = None
     interviewDate: Optional[str] = None 
     interviewTime: Optional[str] = None 
+  #  interviewResult: Optional[str] = None 
 
     class Config:
         from_attributes = True
@@ -54,3 +55,33 @@ class InterviewApplicantDataMainPageResponse(BaseModel):
 
 class InterviewListApplicantDataMainPageResponse(BaseModel):
     applicants: list[InterviewApplicantDataMainPageResponse]
+
+
+class InterviewEvaPageResponse(BaseModel):
+    applicantId: Optional[str] = None
+    firstnameEN: Optional[str] = None
+    lastnameEN: Optional[str] = None
+    admissionStatus: Optional[str] = None
+    comPrefix: Optional[str] = None 
+    firstName: Optional[str] = None
+    interviewDate: Optional[str] = None
+    interviewTime: Optional[str] = None
+    interviewResult: Optional[str] = None
+    englishScore: Optional[str] = None
+    personalityScore: Optional[str] = None
+    intensionScore: Optional[str] = None
+    computerScore: Optional[str] = None
+    totalScore: Optional[str] = None
+    englishRemark : Optional[str] = None  
+    personalityRemark : Optional[str] = None
+    intensionRemark : Optional[str] = None
+    computerRemark : Optional[str] = None
+    totalRemark : Optional[str] = None
+    comment: Optional[str] = None
+
+        class Config:
+        from_attributes = True
+
+
+class InterviewEvaListPageResponse(BaseModel):
+    applicants: list[InterviewEvaPageResponse]
