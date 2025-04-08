@@ -41,6 +41,15 @@ class ApplicantGeneralInformationUpdate(BaseModel):
     birthDate: Optional[str] = None
     livingCountry: Optional[str] = None
     applicantPicture: Optional[str] = None
+    docCopyIdCard: Optional[str] = None
+    docCopyIdCardName: Optional[str] = None
+    docCopyIdCardSize: Optional[str] = None
+    docCopyPassport: Optional[str] = None
+    docCopyPassportName: Optional[str] = None
+    docCopyPassportSize: Optional[str] = None
+    docCopyHouseRegis: Optional[str] = None
+    docCopyHouseRegisName: Optional[str] = None
+    docCopyHouseRegisSize: Optional[str] = None
     # ContactApplicant
     applicantPhone: Optional[str] = None
     applicantEmail: Optional[str] = None
@@ -97,7 +106,14 @@ class GeneralInfoWithAddress(BaseModel):
     livingCountry: Optional[str] = None
     applicantPicture: Optional[str] = None
     docCopyIdCard: Optional[str] = None
+    docCopyIdCardName: Optional[str] = None
+    docCopyIdCardSize: Optional[str] = None
     docCopyPassport: Optional[str] = None
+    docCopyPassportName: Optional[str] = None
+    docCopyPassportSize: Optional[str] = None
+    docCopyHouseRegis: Optional[str] = None
+    docCopyHouseRegisName: Optional[str] = None
+    docCopyHouseRegisSize: Optional[str] = None
 
     # AddressInfo
     houseNumber: Optional[str] = None
@@ -153,63 +169,184 @@ class ApplicantEducationinfoUpdate(BaseModel):
     academicType: Optional[str] = None
     currentStatus: Optional[str] = None
     graduateDate: Optional[str] = None
+    graduateYear: Optional[str] = None
     academicCountry: Optional[str] = None
     academicProvince: Optional[str] = None
     schoolName: Optional[str] = None
     studyPlan: Optional[str] = None
-    cumulativeGPA: Optional[float] = None
-    dstEnglish: Optional[float] = None
-    dstMathematics: Optional[float] = None
-    dstScitech: Optional[float] = None
+    customAcademicType: Optional[str] = None
+    customStudyPlan: Optional[str] = None
+    cumulativeGPA: Optional[str] = None
+    dstEnglish: Optional[str] = None
+    dstMathematics: Optional[str] = None
+    dstScitech: Optional[str] = None
     comSciTitle: Optional[str] = None
-    comSciCredit: Optional[float] = None
-    gedMathematics: Optional[float] = None
-    gedScience: Optional[float] = None
-    gedSocialStudies: Optional[float] = None
-    gedLanguageArts: Optional[float] = None
-    g12MathCredit: Optional[float] = None
+    comSciCredit: Optional[str] = None
+    gedMathematics: Optional[str] = None
+    gedScience: Optional[str] = None
+    gedSocialStudies: Optional[str] = None
+    gedLanguageArts: Optional[str] = None
+    g12MathCredit: Optional[str] = None 
     g12MathTitle: Optional[str] = None
-    g12SciCredit: Optional[float] = None
+    g12SciCredit: Optional[str] = None
     g12SciTitle: Optional[str] = None
-    g12EnCredit: Optional[float] = None
+    g12EnCredit: Optional[str] = None
     g12EnTitle: Optional[str] = None
+    docCopyTrans: Optional[str] = None
+    docCopyName: Optional[str] = None
+    docCopySize: Optional[str] = None
     # EngExam
     examType: Optional[str] = None
-    enScore: Optional[float] = None
+    enScore: Optional[str] = None
     enExamDate: Optional[str] = None
-    listening: Optional[float] = None
-    speaking: Optional[float] = None
-    reading: Optional[float] = None
-    writing: Optional[float] = None
-    literacy: Optional[float] = None
-    comprehension: Optional[float] = None
-    conversation: Optional[float] = None
-    production:Optional[float] = None
+    listening: Optional[str] = None
+    speaking: Optional[str] = None
+    reading: Optional[str] = None
+    writing: Optional[str] = None
+    literacy: Optional[str] = None
+    comprehension: Optional[str] = None
+    conversation: Optional[str] = None
+    production:Optional[str] = None
+    listeningComprehensionScore:Optional[str] = None
+    structureWrittenScore:Optional[str] = None
+    readingComprehensionScore:Optional[str] = None
+    enCer: Optional[str] = None
+    enCerName: Optional[str] = None
+    enCerSize: Optional[str] = None
     # MathExam
     mathType: Optional[str] = None
-    mathScore: Optional[float] = None
+    mathScore: Optional[str] = None
     mathExamDate: Optional[str] = None
+    mathCer: Optional[str] = None
+    mathCerName: Optional[str] = None
+    mathCerSize: Optional[str] = None
 
 
-class ApplicantEducationInfoResponse(ApplicantEducationinfoUpdate):
-    
+class ApplicantEducationBackground(BaseModel):
+    academicType: Optional[str] = None
+    customAcademicType: Optional[str] = None
+    currentStatus: Optional[str] = None
+    graduateDate: Optional[str] = None
+    graduateYear: Optional[str] = None
+    academicCountry: Optional[str] = None
+    academicProvince: Optional[str] = None
+    schoolName: Optional[str] = None
+    studyPlan: Optional[str] = None
+    customStudyPlan: Optional[str] = None
+    cumulativeGPA: Optional[str] = None
+    dstEnglish: Optional[str] = None
+    dstMathematics: Optional[str] = None
+    dstScitech: Optional[str] = None
+    comSciTitle: Optional[str] = None
+    comSciCredit: Optional[str] = None
+    gedMathematics: Optional[str] = None
+    gedScience: Optional[str] = None
+    gedSocialStudies: Optional[str] = None
+    gedLanguageArts: Optional[str] = None
+    g12MathCredit: Optional[str] = None
+    g12MathTitle: Optional[str] = None
+    g12SciCredit: Optional[str] = None
+    g12SciTitle: Optional[str] = None
+    g12EnCredit: Optional[str] = None
+    g12EnTitle: Optional[str] = None
+    docCopyTrans: Optional[str] = None
+    docCopyName: Optional[str] = None
+    docCopySize: Optional[str] = None
+
+
+class ApplicantEducationEngExam(BaseModel):
+    examType: Optional[str] = None
+    enScore: Optional[str] = None
+    enExamDate: Optional[str] = None
+    listening: Optional[str] = None
+    speaking: Optional[str] = None
+    reading: Optional[str] = None
+    writing: Optional[str] = None
+    literacy: Optional[str] = None
+    comprehension: Optional[str] = None
+    conversation: Optional[str] = None
+    production: Optional[str] = None
+    listeningComprehensionScore: Optional[str] = None
+    structureWrittenScore: Optional[str] = None
+    readingComprehensionScore: Optional[str] = None
+    enCer: Optional[str] = None
+    enCerName: Optional[str] = None
+    enCerSize: Optional[str] = None
+
+
+class ApplicantEducationMathExam(BaseModel):
+    mathType: Optional[str] = None
+    mathScore: Optional[str] = None
+    mathExamDate: Optional[str] = None
+    mathCer: Optional[str] = None
+    mathCerName: Optional[str] = None
+    mathCerSize: Optional[str] = None
+
+
+class ApplicantEducationInfoResponse(BaseModel):
+    background: ApplicantEducationBackground
+    eng_exam: ApplicantEducationEngExam
+    math_exam: ApplicantEducationMathExam
+
     class Config:
         from_attributes = True
 
 
-class ApplicantAdminDashboardResponse(BaseModel):
+# Reward
+class ApplicantRewardResponse(BaseModel):
+    rewardId: Optional[str] = None
     applicantId: Optional[str] = None
-    applicantName: Optional[str] = None
-    programRegistered: Optional[str] = None
-    program: Optional[str] = None
-    submissionStatus: Optional[bool] = None
-    docStatus: Optional[str] = None
-    paymentStatus: Optional[str] = None
-    applicantEmail: Optional[str] = None
-    applicantPhone: Optional[str] = None
+    nameOfCompetition: Optional[str] = None
+    rewardYear: Optional[str] = None
+    rewardLevel: Optional[str] = None
+    rewardAwards: Optional[str] = None
+    project: Optional[str] = None
+    rewardCer: Optional[str] = None
+    rewardCerName: Optional[str] = None
+    rewardCerSize: Optional[str] = None
 
-    class Config:
-        from_attributes = True
 
-class ApplicantListAdminDashboardResponse(BaseModel):
-    applicants: list[ApplicantAdminDashboardResponse]
+# Talent
+class ApplicantTalentResponse(BaseModel):
+    talentId: Optional[str] = None
+    applicantId: Optional[str] = None
+    kindOfTalent: Optional[str] = None
+    nameOfCompetition: Optional[str] = None
+    talentYear: Optional[str] = None
+    talentAwards: Optional[str] = None
+    url: Optional[str] = None
+    moreDetails: Optional[str] = None
+    talentCer: Optional[str] = None
+    talentCerName: Optional[str] = None
+    talentCerSize: Optional[str] = None
+
+
+# Training
+class ApplicantTrainingResponse(BaseModel):
+    trainingId: Optional[str] = None
+    applicantId: Optional[str] = None
+    nameOfCourse: Optional[str] = None
+    institution: Optional[str] = None
+    trainingYear: Optional[str] = None
+    trainingMode: Optional[str] = None
+    trainingCountry: Optional[str] = None
+    trainingCer: Optional[str] = None
+    trainingCerName: Optional[str] = None
+    trainingCerSize: Optional[str] = None
+
+
+# Documents
+class ApplicantDocumentsResponse(BaseModel):
+    stateOfPurpose: Optional[str] = None
+    stateOfPurposeName: Optional[str] = None
+    stateOfPurposeSize: Optional[str] = None
+    portfolio: Optional[str] = None
+    portfolioName: Optional[str] = None
+    portfolioSize: Optional[str] = None
+    vdo: Optional[str] = None
+    applicantResume: Optional[str] = None
+    applicantResumeName: Optional[str] = None
+    applicantResumeSize: Optional[str] = None
+    additional: Optional[str] = None
+    additionalName: Optional[str] = None
+    additionalSize: Optional[str] = None
