@@ -1,4 +1,5 @@
 from sqlalchemy import Column, String, Text, ForeignKey, Integer
+import uuid
 from app.db import Base
 from sqlalchemy.dialects.mysql import LONGTEXT
 from app.models.applicant_general_information import ApplicantGeneralInformation

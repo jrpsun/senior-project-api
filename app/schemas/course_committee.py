@@ -41,6 +41,7 @@ class CourseApplicantDataMainPageResponse(BaseModel):
     program: Optional[str] = None
     admissionStatus: Optional[str] = None
     docStatus: Optional[str] = None
+    paymentStatus: Optional[str] = None
     prefix: Optional[str] = None
     firstName: Optional[str] = None
     lastName: Optional[str] = None
@@ -64,3 +65,10 @@ class PreEvaPageResponse(BaseModel):
     preEvaDate: Optional[str] = None
     preliminaryEva: Optional[str] = None
     preliminaryComment: Optional[str] = None
+
+
+class PreEvaRequest(BaseModel):
+    app_id: str
+    com_id: str
+    preEvaResult: str
+    comment: Optional[str] = None

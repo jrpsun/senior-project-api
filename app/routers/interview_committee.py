@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from app.db import get_db
 from app.crud import interview_committee as crud
@@ -6,7 +6,12 @@ from app.schemas.interview_committee import (
     InterviewCommitteeCreate,
     InterviewCommitteeResponse,
     InterviewCommitteeUpdate,
-    InterviewListApplicantDataMainPageResponse
+    InterviewListApplicantDataMainPageResponse,
+    InterviewEvaCreate,
+    InterviewRoundCreate,
+    InterviewRoomCreate,
+    InterviewRoomUpdate,
+    InterviewEvaUpdate
 )
 
 
@@ -47,9 +52,9 @@ def delete_ic(ic_id: str, db: Session = Depends(get_db)):
     return {"message": "InterviewCommittee deleted successfully"}
 
 
-@router.get("/all-applicant-interviewC", response_model=InterviewListApplicantDataMainPageResponse)
-def read_all_applicants(db: Session = Depends(get_db)):
-    read_all_applicants = crud.get_all_applicants_interview_main_page(db)
+@router.get("/all-applicant-interviewC/{committee_id}", response_model=InterviewListApplicantDataMainPageResponse)
+def read_all_applicants(committee_id: str, db: Session = Depends(get_db)):
+    read_all_applicants = crud.get_all_applicants_interview_main_page(db, committee_id)
     if not read_all_applicants:
         raise HTTPException(status_code=404, detail="Applicant Information not found")
     return read_all_applicants
@@ -64,12 +69,40 @@ def get_interview_eva_info(applican_id: str, db: Session = Depends(get_db)):
 
 
 @router.put("/update-interview-Eva")
-def update_interview_Eva(
-    app_id: str, com_id: str, e_score: int, p_score: int, i_score: int, c_score: int, t_score: int, comment: str, 
-    result: str, er: str, pr: str, ir: str, cr: str, tr: str,
-    db: Session = Depends(get_db)
-    ):
-    update_interview_Eva = crud.update_interview_eva_to_applicant(db, app_id, com_id, e_score, p_score, i_score, c_score, t_score, comment, result, er, pr, ir, cr, tr)
-    if not update_interview_Eva:
-        raise HTTPException(status_code=404, detail="Not found applicant id {app_id}")
-    return update_interview_Eva
+def update_interview_Eva(app_id: str, com_id: str, inEva_data: InterviewEvaUpdate, db: Session = Depends(get_db)):
+    success = crud.update_interview_eva_to_applicant(db, app_id, com_id, inEva_data)
+    if not success:
+        raise HTTPException(status_code=404, detail=f"Applicant id {app_id} not found")
+    
+    return {"status": "success", "message": "Interview evaluation updated successfully"}
+
+
+@router.post("/create-interview-eva")
+def create_int_eva(newEva_data: list[InterviewEvaCreate], db: Session = Depends(get_db)):  
+    return crud.create_interview_eva(db, newEva_data)
+
+
+@router.post("/create-interview-round")
+def create_int_round(newEvaRound_data: InterviewRoundCreate, db: Session = Depends(get_db)):  
+    return crud.create_interview_round(db, newEvaRound_data)
+
+
+@router.put("/update-interview-round")
+def update_int_round(round_id: str, EvaRound_data: InterviewRoundCreate, db: Session = Depends(get_db)):
+    update_int_round = crud.update_interview_round(db, round_id, EvaRound_data)
+    if not update_int_round:
+        raise HTTPException(status_code=404, detail="Not found round id {round_id}")
+    return update_int_round
+
+
+@router.post("/create-interview-room")
+def create_int_room(newIntRoom_data: InterviewRoomCreate, db: Session = Depends(get_db)):  
+    return crud.create_interview_room(db, newIntRoom_data)
+
+
+@router.put("/update-interview-room")
+def update_int_room(room_id: str, EvaRoom_data: InterviewRoomUpdate, db: Session = Depends(get_db)):
+    update_int_room = crud.update_interview_room(db, room_id, EvaRoom_data)
+    if not update_int_room:
+        raise HTTPException(status_code=404, detail="Failed to updating room")
+    return update_int_room

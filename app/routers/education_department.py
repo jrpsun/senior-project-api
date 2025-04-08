@@ -5,7 +5,10 @@ from app.schemas.education_department import (
     EducationDepartmentCreate,
     EducationDepartmentUpdate,
     EducationDepartmentResponse,
-    EduListApplicantDataMainPageResponse
+    EduListApplicantDataMainPageResponse,
+    AdminRoleListPageResponse,
+    SummaryInterviewPageResponse,
+    SummaryInterviewListPageResponse
 )
 from app.crud import education_department as crud
 
@@ -60,3 +63,19 @@ def update_edu_preEva(app_id: list[str], com_id: list[str], db: Session = Depend
     if not updated_edu_preEva:
         raise HTTPException(status_code=404, detail="Education Department not found")
     return updated_edu_preEva
+
+
+@router.get("/get-all-admins", response_model=AdminRoleListPageResponse)
+def get_all_admins(db: Session = Depends(get_db)):
+    get_all_admins = crud.get_all_admins_manage_role_page(db)
+    if not get_all_admins:
+        raise HTTPException(status_code=404, detail="Cannot get Admins")
+    return get_all_admins
+
+
+@router.get("/get-summary-applicants-interview", response_model=SummaryInterviewListPageResponse)
+def get_sum_app_interview(db: Session = Depends(get_db)):
+    get_sum_app_interview = crud.get_all_applicant_summary_interview_page(db)
+    if not get_sum_app_interview:
+        raise HTTPException(status_code=404, detail="Cannot get applicants information")
+    return get_sum_app_interview
