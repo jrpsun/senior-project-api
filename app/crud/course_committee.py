@@ -1,15 +1,18 @@
 from sqlalchemy.orm import Session
+from typing import Optional
 from app.models.course_committee import CourseCommittee
 from app.models.applicant_general_information import ApplicantGeneralInformation
 from app.models.preliminary_evaluation import PreliminaryEvaluation
 from app.models.applicant_status import ApplicantStatus
 from app.models.admission import Admission
+from app.models.applicant_status import ApplicantStatus
 from app.schemas.course_committee import (
     CourseCommitteeCreate,
     CourseCommitteeUpdate,
     CourseApplicantDataMainPageResponse,
     CourseListApplicantDataMainPageResponse,
-    PreEvaPageResponse
+    PreEvaPageResponse,
+    PreEvaRequest
 )
 from datetime import datetime
 
@@ -60,10 +63,9 @@ def delete_course_committee(db: Session, committee_id: str):
         db.commit()
     return committee_record
 
-
-def get_all_applicants_course_main_page(db: Session):
-    query = (
-        db.query(
+# course com screening page
+def get_all_applicants_course_main_page(db: Session, committee_id: Optional[str] = None):
+    query = db.query(
             PreliminaryEvaluation.applicantId.label("applicantId"),
             PreliminaryEvaluation.preEvaDate.label("preEvaDate"),
             CourseCommittee.prefix.label("courseC_prefix"),
@@ -71,30 +73,42 @@ def get_all_applicants_course_main_page(db: Session):
             CourseCommittee.lastName.label("courseC_lastName"),
             ApplicantStatus.admissionStatus.label("admissionStatus"),
             ApplicantStatus.docStatus.label("docStatus"),
+            ApplicantStatus.paymentStatus.label("paymentStatus"),
             Admission.roundName.label("roundName"),
             Admission.program.label("program"),
             ApplicantGeneralInformation.firstnameEN.label("firstnameEN"),
-            ApplicantGeneralInformation.lastnameEN.label("lastnameEN")
+            ApplicantGeneralInformation.lastnameEN.label("lastnameEN"),
+            ApplicantGeneralInformation.firstnameTH.label("firstnameTH"),
+            ApplicantGeneralInformation.lastnameTH.label("lastnameTH"),
         )
-        .outerjoin(CourseCommittee, PreliminaryEvaluation.courseComId == CourseCommittee.courseComId)
-        .outerjoin(ApplicantGeneralInformation, PreliminaryEvaluation.applicantId == ApplicantGeneralInformation.applicantId)
-        .outerjoin(Admission, ApplicantGeneralInformation.programRegistered == Admission.admissionId)
-        .outerjoin(ApplicantStatus, ApplicantGeneralInformation.applicantId == ApplicantStatus.applicantId)
-    ).all()
+    
+    if committee_id:
+        query = query.filter(PreliminaryEvaluation.courseComId == committee_id)
+    
+    query = query.outerjoin(CourseCommittee, PreliminaryEvaluation.courseComId == CourseCommittee.courseComId)
+    query = query.outerjoin(ApplicantGeneralInformation, PreliminaryEvaluation.applicantId == ApplicantGeneralInformation.applicantId)
+    query = query.outerjoin(Admission, ApplicantGeneralInformation.programRegistered == Admission.admissionId)
+    query = query.outerjoin(ApplicantStatus, ApplicantGeneralInformation.applicantId == ApplicantStatus.applicantId)
+    
+    result = query.all()
 
-    if not query:
+    if not result:
         return {"Message": "Applicant not found"}
     
     response_list = []
-    for row in query:
+    for row in result:
+        firstname = row.firstnameTH if row.firstnameTH and row.firstnameTH.lower() != "string" else row.firstnameEN
+        lastname = row.lastnameTH if row.lastnameTH and row.lastnameTH.lower() != "string" else row.lastnameEN
+
         response_data = {
             "roundName": row.roundName,
             "applicantId": row.applicantId,
-            "firstnameEN": row.firstnameEN,
-            "lastnameEN": row.lastnameEN,
+            "firstnameEN": firstname,  
+            "lastnameEN": lastname,
             "program": row.program,
             "admissionStatus": row.admissionStatus,
             "docStatus": row.docStatus,
+            "paymentStatus": row.paymentStatus,
             "prefix": row.courseC_prefix,
             "firstName": row.courseC_firstName,
             "lastName": row.courseC_lastName,
@@ -104,6 +118,8 @@ def get_all_applicants_course_main_page(db: Session):
         response_list.append(CourseApplicantDataMainPageResponse(**response_data).model_dump(exclude_unset=True))
 
     return CourseListApplicantDataMainPageResponse(applicants=response_list)
+
+
 
 
 def get_pre_eva_page(db :Session, applicant_id: str):
@@ -147,20 +163,30 @@ def get_pre_eva_page(db :Session, applicant_id: str):
     return response_data
 
 
-def update_pre_eva_to_applicant(db: Session, app_id: str, com_id: str, preEvaResult: str, comment: str):
-    
-    update_pre_Eva = db.query(PreliminaryEvaluation).filter(
+# Pre Eva Page
+def update_pre_eva_to_applicant(db: Session, app_id: str, com_id: str, preEvaResult: str, comment: Optional[str] = None):
+    status = "04 - ผ่านการพิจารณา" if preEvaResult == "ผ่านการคัดกรอง" else "05 - ไม่ผ่านการพิจารณา"
+
+    pre_eva_updated = db.query(PreliminaryEvaluation).filter(
         PreliminaryEvaluation.applicantId == app_id,
         PreliminaryEvaluation.courseComId == com_id
-        ).update(
+    ).update(
         {
+            PreliminaryEvaluation.preliminaryEva: preEvaResult,
+            PreliminaryEvaluation.preliminaryComment: comment
+        },
+        synchronize_session=False
+    )
 
-            "preliminaryEva": preEvaResult,
-            "preliminaryComment": comment
+    applicant_status_updated = db.query(ApplicantStatus).filter(
+        ApplicantStatus.applicantId == app_id
+    ).update(
+        {
+            ApplicantStatus.admissionStatus: status
+        },
+        synchronize_session=False
+    )
 
-        }, synchronize_session=False
-        )
-    
     db.commit()
-    
-    return update_pre_Eva
+
+    return pre_eva_updated and applicant_status_updated

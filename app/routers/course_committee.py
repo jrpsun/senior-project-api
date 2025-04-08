@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from typing import Optional
 from app.db import get_db
 from app.crud import course_committee as crud
 from app.schemas.course_committee import (
@@ -49,8 +50,8 @@ def delete_committee(committee_id: str, db: Session = Depends(get_db)):
 
 
 @router.get("/all-applicant-courseC", response_model=CourseListApplicantDataMainPageResponse)
-def read_all_applicants(db: Session = Depends(get_db)):
-    read_all_applicants = crud.get_all_applicants_course_main_page(db)
+def read_all_applicants(committee_id: Optional[str] = None, db: Session = Depends(get_db)):
+    read_all_applicants = crud.get_all_applicants_course_main_page(db, committee_id)
     if not read_all_applicants:
         raise HTTPException(status_code=404, detail="Applicant Information not found")
     return read_all_applicants
@@ -65,7 +66,7 @@ def get_pre_eva_info(applican_id: str, db: Session = Depends(get_db)):
 
 
 @router.put("/update-pre-Eva")
-def update_pre_Eva(app_id: str, com_id: str, preEvaResult: str, comment: str, db: Session = Depends(get_db)):
+def update_pre_Eva(app_id: str, com_id: str,preEvaResult: str, comment: Optional[str] = None, db: Session = Depends(get_db)):
     update_pre_Eva = crud.update_pre_eva_to_applicant(db, app_id, com_id, preEvaResult, comment)
     if not update_pre_Eva:
         raise HTTPException(status_code=404, detail="Not found applicant id {app_id}")

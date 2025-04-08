@@ -14,3 +14,5 @@ class EducationDepartment(Base):
     email = Column(String(50))
     lastSeen = Column(String(50), nullable=True)
     phoneNumber = Column(String(50))
+
+
