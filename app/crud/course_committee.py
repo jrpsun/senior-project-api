@@ -68,6 +68,9 @@ def get_all_applicants_course_main_page(db: Session, committee_id: Optional[str]
     query = db.query(
             PreliminaryEvaluation.applicantId.label("applicantId"),
             PreliminaryEvaluation.preEvaDate.label("preEvaDate"),
+            PreliminaryEvaluation.preliminaryEva.label("preliminaryEva"),
+            PreliminaryEvaluation.preliminaryComment.label("preliminaryComment"),
+            CourseCommittee.courseComId.label("courseComId"),
             CourseCommittee.prefix.label("courseC_prefix"),
             CourseCommittee.firstName.label("courseC_firstName"),
             CourseCommittee.lastName.label("courseC_lastName"),
@@ -105,14 +108,18 @@ def get_all_applicants_course_main_page(db: Session, committee_id: Optional[str]
             "applicantId": row.applicantId,
             "firstnameEN": firstname,  
             "lastnameEN": lastname,
+            "fullnameEN": f"{firstname} {lastname}",
             "program": row.program,
             "admissionStatus": row.admissionStatus,
             "docStatus": row.docStatus,
             "paymentStatus": row.paymentStatus,
+            "courseComId": row.courseComId,
             "prefix": row.courseC_prefix,
             "firstName": row.courseC_firstName,
             "lastName": row.courseC_lastName,
-            "preEvaDate": row.preEvaDate
+            "preEvaDate": row.preEvaDate,
+            "preliminaryEva": row.preliminaryEva,
+            "preliminaryComment": row.preliminaryComment
         }
 
         response_list.append(CourseApplicantDataMainPageResponse(**response_data).model_dump(exclude_unset=True))
@@ -121,7 +128,7 @@ def get_all_applicants_course_main_page(db: Session, committee_id: Optional[str]
 
 
 
-
+# pre eva tab in view applicant information page
 def get_pre_eva_page(db :Session, applicant_id: str):
     query = (
         db.query(

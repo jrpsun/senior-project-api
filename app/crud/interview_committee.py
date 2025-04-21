@@ -18,7 +18,8 @@ from app.schemas.interview_committee import (
     InterviewRoundCreate,
     InterviewRoomCreate,
     InterviewRoomUpdate,
-    InterviewEvaUpdate
+    InterviewEvaUpdate,
+    EditInterviewRoom
 )
 from datetime import datetime
 
@@ -71,6 +72,15 @@ def delete_interview_committee(db: Session, ic_id: str):
 
 # interview com screening page
 def get_all_applicants_interview_main_page(db: Session, committee_id: str):
+    # Step 1: Get applicants evaluated by this committee
+    applicant_ids_subquery = (
+        db.query(InterviewEvaluation.applicantId)
+        .filter(InterviewEvaluation.interviewComId == committee_id)
+        .distinct()
+        .subquery()
+    )
+
+    # Step 2: Get full evaluation data for those applicants
     subquery = (
         db.query(
             InterviewEvaluation.applicantId.label("applicantId"),
@@ -83,6 +93,7 @@ def get_all_applicants_interview_main_page(db: Session, committee_id: str):
             InterviewCommittee.lastName.label("lastName"),
         )
         .join(InterviewCommittee, InterviewEvaluation.interviewComId == InterviewCommittee.interviewComId)
+        .filter(InterviewEvaluation.applicantId.in_(applicant_ids_subquery))
         .subquery()
     )
 
@@ -109,12 +120,13 @@ def get_all_applicants_interview_main_page(db: Session, committee_id: str):
         .outerjoin(ApplicantGeneralInformation, subquery.c.applicantId == ApplicantGeneralInformation.applicantId)
         .outerjoin(Admission, ApplicantGeneralInformation.programRegistered == Admission.admissionId)
         .outerjoin(ApplicantStatus, ApplicantGeneralInformation.applicantId == ApplicantStatus.applicantId)
-    ).all()
+        .all()
+    )
 
     if not query:
-        return {"Message": "Applicant not found"}
+        return {"applicants": []}
 
-    # Group by applicantId to collect both committee members
+    # Step 3: Group by applicantId and assign up to 2 committee members
     applicant_map = {}
     for row in query:
         app_id = row.applicantId
@@ -143,10 +155,11 @@ def get_all_applicants_interview_main_page(db: Session, committee_id: str):
                 "lastName2": None
             }
         else:
-            # Add second committee
-            applicant_map[app_id]["prefix2"] = row.prefix
-            applicant_map[app_id]["firstName2"] = row.firstName
-            applicant_map[app_id]["lastName2"] = row.lastName
+            # Fill second committee member if not already set
+            if not applicant_map[app_id]["prefix2"]:
+                applicant_map[app_id]["prefix2"] = row.prefix
+                applicant_map[app_id]["firstName2"] = row.firstName
+                applicant_map[app_id]["lastName2"] = row.lastName
 
     response_list = [
         InterviewApplicantDataMainPageResponse(**data).model_dump(exclude_unset=True)
@@ -223,32 +236,36 @@ def get_interview_eva_page(db :Session, applicant_id: str):
 
 # interview eva page
 def update_interview_eva_to_applicant(db: Session, app_id: str, com_id: str, inEva_data: InterviewEvaUpdate):
+    update_data = {
+        "englishScore": inEva_data.englishScore,
+        "personalityScore": inEva_data.personalityScore,
+        "intensionScore": inEva_data.intensionScore, 
+        "computerScore": inEva_data.computerScore,
+        "totalScore": inEva_data.totalScore,
+        "comment": inEva_data.comment,
+        "englishRemark": inEva_data.englishRemark,
+        "personalityRemark": inEva_data.personalityRemark,
+        "intensionRemark": inEva_data.intensionRemark,
+        "computerRemark": inEva_data.computerRemark,
+        "totalRemark": inEva_data.totalRemark,
+        "outstandingLevel": inEva_data.outstandingLevel
+    }
+
+    # Only include interviewResult if it is provided
+    if inEva_data.interviewResult is not None:
+        update_data["interviewResult"] = inEva_data.interviewResult
+
     db.query(InterviewEvaluation).filter(
         InterviewEvaluation.applicantId == app_id,
         InterviewEvaluation.interviewComId == com_id
-    ).update(
-        {
-            "englishScore": inEva_data.englishScore,
-            "personalityScore": inEva_data.personalityScore,
-            "intensionScore": inEva_data.intensionScore, 
-            "computerScore": inEva_data.computerScore,
-            "totalScore": inEva_data.totalScore,
-            "comment": inEva_data.comment,
-            "englishRemark": inEva_data.englishRemark,
-            "personalityRemark": inEva_data.personalityRemark,
-            "intensionRemark": inEva_data.intensionRemark,
-            "computerRemark": inEva_data.computerRemark,
-            "totalRemark": inEva_data.totalRemark,
-            "interviewResult": inEva_data.interviewResult
-        }, synchronize_session=False
-    )
+    ).update(update_data, synchronize_session=False)
 
+    # Fetch all evaluations again
     evaluations = db.query(InterviewEvaluation).filter(
         InterviewEvaluation.applicantId == app_id
     ).all()
 
     results = [eva.interviewResult for eva in evaluations]
-
     results = [res for res in results if res is not None]
 
     if len(results) == 2:
@@ -275,9 +292,7 @@ def update_interview_eva_to_applicant(db: Session, app_id: str, com_id: str, inE
         admissionStatus = "07 - ผ่านการสัมภาษณ์"
     elif interviewStatus == "05 - ไม่ผ่านการสัมภาษณ์":
         admissionStatus = "08 - ไม่ผ่านการสัมภาษณ์"
-    elif interviewStatus == "03 - รอพิจารณาเพิ่มเติม":
-        admissionStatus = "06 - รอสัมภาษณ์"
-    elif interviewStatus == "06 - รอผลการประเมินเพิ่มเติม":
+    elif interviewStatus in ["03 - รอพิจารณาเพิ่มเติม", "06 - รอผลการประเมินเพิ่มเติม"]:
         admissionStatus = "06 - รอสัมภาษณ์"    
     else:
         admissionStatus = "08 - ไม่ผ่านการสัมภาษณ์"
@@ -288,32 +303,40 @@ def update_interview_eva_to_applicant(db: Session, app_id: str, com_id: str, inE
         {"admissionStatus": admissionStatus}, synchronize_session=False
     )
 
-
     db.commit()
-
     return True
+
 
 
 def create_interview_eva(db: Session, newEva_data: list[InterviewEvaCreate]):
     new_evaluations = []
-    
+
     for eva in newEva_data:
-        for committee_id in eva.committeeId:  
+        for committee_id in eva.committeeId:
             new_eva = InterviewEvaluation(
-                applicantId = eva.applicantId,
-                interviewComId = committee_id,
-                interviewDate = eva.intDate,
-                interviewTime = eva.intTime,
-                interviewRoom = eva.room
+                applicantId=eva.applicantId,
+                interviewComId=committee_id,
+                interviewRoundId=eva.interviewRoundId,
+                interviewRoom=eva.room,
+                interviewDate=eva.intDate,
+                interviewTime=eva.intTime,
             )
             db.add(new_eva)
             new_evaluations.append(new_eva)
 
+        applicant_status = db.query(ApplicantStatus).filter_by(applicantId=eva.applicantId).first()
+        if applicant_status:
+            applicant_status.interviewStatus = "01 - รอสัมภาษณ์"
+            applicant_status.admissionStatus = "06 - รอสัมภาษณ์"
+        else:
+            print(f"ApplicantStatus not found for {eva.applicantId}")
+
     db.commit()
     for e in new_evaluations:
         db.refresh(e)
-    
+
     return new_evaluations
+
 
 
 def create_interview_round(db: Session, newEvaRound_data: InterviewRoundCreate):
@@ -411,3 +434,18 @@ def update_interview_room(db: Session, room_id: str, IntRoom_data: InterviewRoom
     
     return {"message": "Interview Room updated successfully"}
 
+
+# updating interview room for interview auto grouping page
+def update_interview_room_auto_group(db: Session, update_data: EditInterviewRoom):
+    db.query(InterviewEvaluation).filter(InterviewEvaluation.applicantId == update_data.applicantId).update(
+        {
+            InterviewEvaluation.interviewRoundId: update_data.interviewRoundId,
+            InterviewEvaluation.interviewRoom: update_data.interviewRoom,
+            InterviewEvaluation.interviewTime: update_data.interviewTime
+        },
+        synchronize_session=False
+    )
+
+    db.commit()
+
+    return db.query(InterviewEvaluation).filter(InterviewEvaluation.applicantId == update_data.applicantId).all()

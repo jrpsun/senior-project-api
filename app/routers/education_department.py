@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
+from typing import Optional
 from sqlalchemy.orm import Session
 from app.db import get_db
 from app.schemas.education_department import (
@@ -8,7 +9,18 @@ from app.schemas.education_department import (
     EduListApplicantDataMainPageResponse,
     AdminRoleListPageResponse,
     SummaryInterviewPageResponse,
-    SummaryInterviewListPageResponse
+    SummaryInterviewListPageResponse,
+    PreEvaUpdateApplicantModel,
+    EduInterviewEvaListResponse,
+    InterviewRoundResponse,
+    InterviewRoundListResponse,
+    InterviewRoundUpdate,
+    InterviewRoomDetailCreating,
+    InterviewRoomCommitteeCreating,
+    InterviewRoomCommitteeResponse,
+    InterviewRoundDetailListResponse,
+    InterviewRoomCommitteeUpdateRequest,
+    InterviewRoomDetailsListResponse
 )
 from app.crud import education_department as crud
 
@@ -37,7 +49,7 @@ def read_all_edu_deps(db: Session = Depends(get_db)):
 def update_edu_dep(edu_id: str, edu_data: EducationDepartmentUpdate, db: Session = Depends(get_db)):
     updated_edu_dep = crud.update_education_department(db, edu_id, edu_data)
     if not updated_edu_dep:
-        raise HTTPException(status_code=404, detail="Education Department not found")
+        raise HTTPException(status_code=404, detail="Education Department not found2")
     return updated_edu_dep
 
 
@@ -58,11 +70,11 @@ def read_all_applicants(db: Session = Depends(get_db)):
 
 
 @router.put("/update-edu-preEva")
-def update_edu_preEva(app_id: list[str], com_id: list[str], db: Session = Depends(get_db)):
-    updated_edu_preEva = crud.update_courseC_to_applicant(db, app_id, com_id)
-    if not updated_edu_preEva:
+def update_edu_preEva(assignments: list[PreEvaUpdateApplicantModel], db: Session = Depends(get_db)):
+    edu_update_preEva = crud.update_courseC_to_applicant(db, assignments)
+    if not edu_update_preEva:
         raise HTTPException(status_code=404, detail="Education Department not found")
-    return updated_edu_preEva
+    return edu_update_preEva
 
 
 @router.get("/get-all-admins", response_model=AdminRoleListPageResponse)
@@ -79,3 +91,94 @@ def get_sum_app_interview(db: Session = Depends(get_db)):
     if not get_sum_app_interview:
         raise HTTPException(status_code=404, detail="Cannot get applicants information")
     return get_sum_app_interview
+
+
+@router.get("/get-applicant-interview-eva/{applicant_id}/{committee_id}", response_model=EduInterviewEvaListResponse)
+def get_applicant_interview_eva(applicant_id: str, committee_id: Optional[str] = None, db: Session = Depends(get_db)):
+    get_applicant_interview_eva = crud.get_all_applicant_result_interview_eva_page(db, applicant_id, committee_id)
+    if not get_applicant_interview_eva:
+        raise HTTPException(status_code=404, detail="Cannot get applicants information")
+    return get_applicant_interview_eva
+
+
+@router.get("/get-applicant-interview-eva/{applicant_id}", response_model=EduInterviewEvaListResponse)
+def get_applicant_interview_eva(applicant_id: str, db: Session = Depends(get_db)):
+    get_applicant_interview_eva = crud.get_all_applicant_result_interview_eva_page(db, applicant_id)
+    if not get_applicant_interview_eva:
+        raise HTTPException(status_code=404, detail="Cannot get applicants information")
+    return get_applicant_interview_eva
+
+########## interview round ##########
+@router.get("/get-interview-round", response_model=InterviewRoundListResponse)
+def get_interview_round(db: Session = Depends(get_db)):
+    return crud.get_interview_round(db)
+
+
+@router.post("/create-interview-round", response_model=InterviewRoundResponse)
+def create_interview_round(data: InterviewRoundResponse, db: Session = Depends(get_db)):
+    return crud.create_interview_round(db, data)
+
+
+@router.put("/update-interview-round/{interviewRoundId}", response_model=InterviewRoundUpdate)
+def update_interview_round(interviewRoundId: str, data: InterviewRoundUpdate, db: Session = Depends(get_db)):
+    update_interview_round = crud.update_interview_round(db, interviewRoundId, data)
+    if not update_interview_round:
+        raise HTTPException(status_code=404, detail="Interview Round Not Found")
+    return update_interview_round
+####################
+
+
+########## interview room detail ##########
+@router.get("/get-all-interview-room-detail", response_model=list[InterviewRoomDetailCreating])
+def read_all_interview_room_detail(db: Session = Depends(get_db)):
+    return crud.get_all_interview_room_detail(db)
+
+@router.post("/create-interview-room-detail", response_model=InterviewRoomDetailCreating)
+def create_interview_room_detail(data: InterviewRoomDetailCreating, db: Session = Depends(get_db)):
+    return crud.create_interview_room_detail(db, data)
+
+
+@router.put("/update-interview-room-detail", response_model=InterviewRoomDetailCreating)
+def update_interview_room_detail(data: InterviewRoomDetailCreating, db: Session = Depends(get_db)):
+    return crud.update_interview_room_detail(db, data)
+
+
+@router.delete("/delete-interview-room-detail")
+def delete_interview_room_detail(round_id: str, room_id: str, db: Session = Depends(get_db)):
+    return crud.delete_interview_room_detail(db, round_id, room_id)
+####################
+
+
+########## interview room committee ##########
+@router.get("/get-all-interview-room-committee", response_model=list[InterviewRoomCommitteeResponse])
+def read_all_interview_room_committee(db: Session = Depends(get_db)):
+    return crud.get_all_interview_room_committee(db)
+
+
+@router.get("/get-one-interview-room-committee", response_model=list[InterviewRoomCommitteeResponse])
+def read_one_interview_room_committee(room_id: str, db: Session = Depends(get_db)):
+    return crud.get_one_interview_room_committee(db, room_id)
+
+
+@router.post("/create-interview-room-committee", response_model=InterviewRoomCommitteeCreating)
+def create_interview_room_committee(data: InterviewRoomCommitteeCreating, db: Session = Depends(get_db)):
+    return crud.create_interview_room_committee(db, data)
+
+
+@router.delete("/delete-interview-room-committee")
+def delete_interview_room_committee(interview_room_id: str, db: Session = Depends(get_db)):
+    return crud.delete_interview_room_committee(db, interview_room_id)
+####################
+
+
+@router.get("/get-interview-room-details", response_model=InterviewRoundDetailListResponse)
+def get_all_interview_room_details(db: Session = Depends(get_db)):
+    return crud.get_all_interview_room_details(db)
+
+
+@router.get("/get-all-interview-rooms", response_model=InterviewRoomDetailsListResponse)
+def get_all_rooms_api(db: Session = Depends(get_db)):
+    rooms = crud.get_all_interview_rooms(db)
+    if not rooms.room:
+        raise HTTPException(status_code=404, detail="No interview rooms found")
+    return rooms

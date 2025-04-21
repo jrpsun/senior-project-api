@@ -41,7 +41,7 @@ async def upload_file(type_cer: str, file: UploadFile = File(...)):
         return {"error": "Type Certificate Not Found"}
 
     result = Gemini.generate(prompt)
-
+    print(extracted_texts)
     return result
 
 
@@ -68,7 +68,7 @@ async def upload_file(file: UploadFile = File(...)):
     
     prompt = Prompt.identification_card_prompt(extracted_texts)
     result = Gemini.generate(prompt)
-
+    print(extracted_texts)
     return result
 
 

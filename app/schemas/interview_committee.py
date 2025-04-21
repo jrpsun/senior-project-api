@@ -21,7 +21,6 @@ class InterviewCommitteeUpdate(BaseModel):
     prefix: Optional[str] = None
     firstName: Optional[str] = None
     lastName: Optional[str] = None
-    username: Optional[str] = None
     email: Optional[str] = None
     phoneNumber: Optional[str] = None
 
@@ -104,15 +103,18 @@ class InterviewEvaUpdate(BaseModel):
     totalRemark : Optional[str] = None
     comment: Optional[str] = None
     interviewResult: Optional[str] = None
-    committee: list[str]
+    outstandingLevel: Optional[str] = None
+    #committee: list[str]
 
 
 class InterviewEvaCreate(BaseModel):
-    applicantId: str 
-    room: str
-    intDate: str
-    intTime: str
+    applicantId: Optional[str] = None
+    room: Optional[str] = None
+    intDate: Optional[str] = None
+    intTime: Optional[str] = None
+    interviewRoundId: Optional[str] = None
     committeeId: list[str]
+
 
 
 class InterviewRoundCreate(BaseModel):
@@ -140,3 +142,10 @@ class InterviewRoomUpdate(BaseModel):
     endTime: Optional[str] = None 
     duration: Optional[str] = None
     interviewComId: list[str]
+
+
+class EditInterviewRoom(BaseModel):
+    applicantId: Optional[str] = None
+    interviewRoom: Optional[str] = None
+    interviewRoundId: Optional[str] = None
+    interviewTime: Optional[str] = None

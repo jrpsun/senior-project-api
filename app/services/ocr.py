@@ -265,7 +265,7 @@ class OCRProcessor:
 
 
     @staticmethod
-    def crop_top_third(image_bytes, save_path=None):
+    def crop_top_third(image_bytes):
         # แปลง bytes เป็นรูปภาพ
         image = Image.open(io.BytesIO(image_bytes))
         
@@ -276,12 +276,6 @@ class OCRProcessor:
         # ตัดรูปจากด้านบน 1/3
         cropped_image = image.crop((0, 0, width, crop_height))
         
-        # บันทึกรูปภาพลงเครื่อง (ถ้ามี save_path)
-        if save_path:
-            # สร้างโฟลเดอร์ถ้ายังไม่มี
-            os.makedirs(os.path.dirname(save_path), exist_ok=True)
-            cropped_image.save(save_path)
-        
         # แปลงรูปกลับเป็น bytes
         byte_arr = io.BytesIO()
         cropped_image.save(byte_arr, format=image.format)
@@ -289,7 +283,7 @@ class OCRProcessor:
         return byte_arr.getvalue()
     
     @staticmethod
-    def crop_without_top_bottom_third(image_bytes, save_path=None):
+    def crop_without_top_bottom_third(image_bytes):
         image = Image.open(io.BytesIO(image_bytes))
         
         width, height = image.size
@@ -298,11 +292,7 @@ class OCRProcessor:
         end_y = height * 3 // 5
 
         cropped_image = image.crop((0, start_y, width, end_y))
-        
-        if save_path:
-            os.makedirs(os.path.dirname(save_path), exist_ok=True)
-            cropped_image.save(save_path)
-        
+    
         byte_arr = io.BytesIO()
         cropped_image.save(byte_arr, format=image.format)
         

@@ -18,10 +18,8 @@ class PublicRelationsCreate(PublicRelationsBase):
 class PublicRelationsUpdate(BaseModel):
     firstName: Optional[str] = None
     lastName: Optional[str] = None
-    username: Optional[str] = None
     email: Optional[str] = None
     phoneNumber: Optional[str] = None
-    password: Optional[str] = None
 
 
 class PublicRelationsResponse(PublicRelationsBase):
