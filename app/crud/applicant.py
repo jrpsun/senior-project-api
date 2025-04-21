@@ -3,29 +3,34 @@ from sqlalchemy.orm import Session
 from fastapi import HTTPException
 from app.models import *
 from app.schemas.applicant import *
+from app.services.auth import *
+from typing import Optional
+from datetime import timedelta
+from fastapi import Response
 
 
 def create_applicant(db: Session, applicant_data: ApplicantCreate):
-    ## TODO programRegistered 
-    ## TODO encrypt password
+    ## TODO programRegistered
+
+    new_applicant_id = generate_next_id(db)
 
     new_applicant_general = ApplicantGeneralInformation(
-        applicantId=applicant_data.applicantId,
+        applicantId=new_applicant_id,
         nationality=applicant_data.nationality,
-        idCardNumber=applicant_data.idCardNumber,
-        passportId=applicant_data.passportId,
-        prefix=applicant_data.prefix,
-        firstnameTH=applicant_data.firstnameTH,
-        lastnameTH=applicant_data.lastnameTH,
-        firstnameEN=applicant_data.firstnameEN,
-        lastnameEN=applicant_data.lastnameEN,
+        idCardNumber=applicant_data.idNumber if applicant_data.idType == "citizen" else "",
+        passportId=applicant_data.idNumber if applicant_data.idType == "passport" else "",
+        prefix=applicant_data.title,
+        firstnameTH=applicant_data.firstNameThai,
+        lastnameTH=applicant_data.lastNameThai,
+        firstnameEN=applicant_data.firstNameEnglish,
+        lastnameEN=applicant_data.lastNameEnglish,
         submissionStatus=False,
-        password=applicant_data.password,
+        password=hash_password(applicant_data.password),
     )
 
     new_contact = ApplicantContact(
-        applicantId=applicant_data.applicantId,
-        applicantEmail=applicant_data.applicantEmail,
+        applicantId=new_applicant_id,
+        applicantEmail=applicant_data.email,
     )
 
     applicant_models = [
@@ -40,7 +45,7 @@ def create_applicant(db: Session, applicant_data: ApplicantCreate):
         PreliminaryEvaluation
     ]
 
-    new_records = [model(applicantId=applicant_data.applicantId) for model in applicant_models]
+    new_records = [model(applicantId=new_applicant_id) for model in applicant_models]
     
     db.add(new_applicant_general)
     db.commit()
@@ -54,7 +59,51 @@ def create_applicant(db: Session, applicant_data: ApplicantCreate):
     for record in new_records:
         db.refresh(record)
 
-    return {"Message": f"Create Applicant id {applicant_data.applicantId} Success."}
+    return {"Message": f"Create Applicant id {new_applicant_id} Success."}
+
+
+def applicant_login(response: Response, db: Session, idNumber: str, password: str):
+    user: Optional[ApplicantGeneralInformation] = db.query(ApplicantGeneralInformation).filter(
+        (ApplicantGeneralInformation.idCardNumber == idNumber) |
+        (ApplicantGeneralInformation.passportId == idNumber)
+    ).first()
+
+    if not user or not verify_password(password, user.password):
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+
+    access_token = create_token(
+        data={"sub": user.firstnameEN + " " + user.lastnameEN, "appId": user.applicantId},
+        expires_delta=timedelta(minutes=60)
+    )
+
+    refresh_token = create_token(
+        data={"sub": user.firstnameEN, "appId": user.applicantId},
+        expires_delta=timedelta(days=1),
+        secret=REFRESH_SECRET
+    )
+
+    response.set_cookie(
+        key="refresh_token",
+        value=refresh_token,
+        httponly=True,
+        secure=True,
+        samesite="strict",
+        max_age=60 * 60 * 24
+    )
+
+    return {
+        "access_token": access_token,
+        "token_type": "bearer"
+    }
+
+
+def generate_next_id(db: Session) -> str:
+    last_user = db.query(ApplicantGeneralInformation).order_by(ApplicantGeneralInformation.applicantId.desc()).first()
+    if not last_user:
+        return "0000001"
+    last_id = int(last_user.applicantId)
+    next_id = last_id + 1
+    return str(next_id).zfill(7)
 
 
 # General Information
@@ -414,4 +463,85 @@ def updated_applicant_status(db: Session, appId: str):
         db.commit()
         db.refresh(applicant)
 
+    applicant_status = db.query(ApplicantStatus).filter(ApplicantStatus.applicantId == appId).first()
+
+    if applicant_status:
+        applicant_status.admissionStatus = "02 - ยื่นใบสมัครแล้ว"
+        applicant_status.paymentStatus = "03 - ชำระเงินเรียบร้อย"
+        applicant_status.docStatus = "02 - รอตรวจสอบเอกสาร"
+
+        db.commit()
+        db.refresh(applicant_status)
+
     return applicant
+
+
+def get_admission_id_by_app_id(db: Session, appId: str):
+    applicant = db.query(ApplicantGeneralInformation).filter(ApplicantGeneralInformation.applicantId == appId).first()
+
+    if not applicant:
+        raise HTTPException(status_code=404, detail=f"Applicant with ID: {appId} Not Found")
+    
+    if not applicant.programRegistered:
+        return ""
+
+    return applicant.programRegistered
+
+
+def updated_admission_id(db: Session, appId: str, admissionId: str):
+    applicant = db.query(ApplicantGeneralInformation).filter(ApplicantGeneralInformation.applicantId == appId).first()
+
+    if not applicant:
+        raise HTTPException(status_code=404, detail=f"Applicant with ID: {appId} Not Found")
+    
+    applicant.programRegistered = admissionId
+
+    db.commit()
+    db.refresh(applicant)
+
+    return applicant
+
+
+def get_applicant_edited_profile(db: Session, appId: str):
+    query = (db.query(
+        ApplicantGeneralInformation,
+        ApplicantContact
+    )
+    .outerjoin(ApplicantContact, ApplicantGeneralInformation.applicantId == ApplicantContact.applicantId)
+    .filter(ApplicantGeneralInformation.applicantId == appId)
+    .first())
+
+    if not query:
+        raise HTTPException(status_code=404, detail=f"Applicant with ID: {appId} Not Found")
+    
+    general, contact = query
+    response_data = {}
+
+    if general:
+        response_data.update(general.__dict__)
+
+    if contact:
+        response_data.update(contact.__dict__)
+
+    return ApplicantInfoProfile(**response_data).model_dump(exclude_unset=True)
+
+
+def updated_applicant_profile(db: Session, appId: str, data: ApplicantEditProfile):
+    general = db.query(ApplicantGeneralInformation).filter(ApplicantGeneralInformation.applicantId == appId).first()
+    contact = db.query(ApplicantContact).filter(ApplicantContact.applicantId ==  appId).first()
+
+    if not general or not contact:
+        raise HTTPException(status_code=404, detail=f"Applicant with ID: {appId} Not Found")
+    
+    general.prefix = data.prefix
+    general.firstnameTH = data.firstNameTH
+    general.lastnameTH = data.lastNameTH
+    general.firstnameEN = data.firstNameEN
+    general.lastnameEN = data.lastNameEN
+
+    contact.applicantEmail = data.email
+
+    db.commit()
+
+    return {"detail": f"Updated Applicant with ID: {appId} success"}
+

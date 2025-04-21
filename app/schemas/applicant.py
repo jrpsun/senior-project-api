@@ -4,8 +4,25 @@ from fastapi import UploadFile, File
 
 
 
-class ApplicantBase(BaseModel):
-    applicantId: str
+class ApplicantCreate(BaseModel):
+    idNumber: str
+    idType: str
+    email: str
+    title: str
+    firstNameEnglish: str
+    firstNameThai: Optional[str] = None
+    lastNameEnglish: str
+    lastNameThai: Optional[str] = None
+    nationality: str
+    password: str
+
+
+class ApplicantLoginRequest(BaseModel):
+    idNumber: str
+    password: str
+
+
+class ApplicantInfoProfile(BaseModel):
     nationality: str
     idCardNumber: Optional[str] = None
     passportId: Optional[str] = None
@@ -17,8 +34,14 @@ class ApplicantBase(BaseModel):
     applicantEmail: str
 
 
-class ApplicantCreate(ApplicantBase):
-    password: str
+class ApplicantEditProfile(BaseModel):
+    prefix: str
+    firstNameTH: str
+    lastNameTH: str
+    firstNameEN: str
+    lastNameEN: str
+    email: str
+
 
 
 class ApplicantGeneralInformationUpdate(BaseModel):

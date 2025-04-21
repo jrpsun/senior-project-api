@@ -257,7 +257,7 @@ class OCRProcessor:
         cropped_image = OCRProcessor.crop_thai_id_card_from_bytes(image_bytes)
         
         # บันทึกรูปที่ crop (ถ้าต้องการ)
-        cv2.imwrite('cropped_id_card.jpg', cropped_image)
+        # cv2.imwrite('cropped_id_card.jpg', cropped_image)
         
         # ทำ OCR
         ocr_result = OCRProcessor.perform_ocr(cropped_image)

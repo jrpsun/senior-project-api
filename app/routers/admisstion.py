@@ -1,12 +1,14 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.db import get_db
+from app.models.applicant_general_information import ApplicantGeneralInformation
 from app.schemas.admission import (
     AdmissionBase,
     AdmissionUpdate,
     AdmissionResponse,
 )
 from app.crud import admission as crud
+from app.services.auth import get_current_user
 
 router = APIRouter()
 
@@ -25,7 +27,7 @@ def read_admission(admission_id: str, db: Session = Depends(get_db)):
 
 
 @router.get("/", response_model=list[AdmissionResponse])
-def read_all_admissions(db: Session = Depends(get_db)):
+def read_all_admissions(db: Session = Depends(get_db), current_user: ApplicantGeneralInformation = Depends(get_current_user)):
     return crud.get_all_admissions(db)
 
 

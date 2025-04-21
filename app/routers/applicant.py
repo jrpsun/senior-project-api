@@ -1,25 +1,23 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from sqlalchemy.orm import Session
 from app.db import get_db
-from app.schemas.applicant import (
-    ApplicantCreate,
-    ApplicantDocumentsResponse,
-    ApplicantGeneralInformationResponse,
-    ApplicantGeneralInformationUpdate,
-    ApplicantEducationInfoResponse,
-    ApplicantEducationinfoUpdate,
-    ApplicantRewardResponse,
-    ApplicantTalentResponse,
-    ApplicantTrainingResponse
-)
+from app.models.applicant_general_information import ApplicantGeneralInformation
+from app.schemas.applicant import *
 from app.crud import applicant as crud
+from app.services.auth import get_current_user, perform_refresh_token
 
 router = APIRouter()
 
 
-@router.post("/")
+@router.post("/register")
 def create_applicant(applicant_data: ApplicantCreate, db: Session = Depends(get_db)):
     return crud.create_applicant(db, applicant_data)
+
+
+@router.post("/login")
+def login_applicant(request: ApplicantLoginRequest, response: Response, db: Session = Depends(get_db)):
+    print("id", request.idNumber, request.password)
+    return crud.applicant_login(response, db, request.idNumber, request.password)
 
 
 @router.put("/general/{applicant_id}")
@@ -149,4 +147,44 @@ def updated_applicant_status(applicant_id: str, db: Session = Depends(get_db)):
     if not applicant:
         raise HTTPException(status_code=404, detail=f"Updated Applicant Status with ID: {applicant_id} Failed")
     return applicant
+
+
+@router.post("/refresh-token")
+def refresh_token(request: Request, response: Response, db: Session = Depends(get_db)):
+    return perform_refresh_token(request, response, db)
+
+
+@router.get("/get-admission-id/{appId}")
+def get_admission_id(appId: str, db: Session = Depends(get_db), current_user: ApplicantGeneralInformation = Depends(get_current_user)):
+    return crud.get_admission_id_by_app_id(db, appId)
+
+
+@router.post("/updated-admission-id/{appId}/{admissionId}")
+def updated_admission_id(
+    appId: str,
+    admissionId: str,
+    db: Session = Depends(get_db),
+    current_user: ApplicantGeneralInformation = Depends(get_current_user)
+):
+    return crud.updated_admission_id(db, appId, admissionId)
+
+
+@router.get("/get-applicant-profile/{appId}")
+def get_applicant_edit_info(
+    appId: str,
+    db: Session = Depends(get_db),
+    current_user: ApplicantGeneralInformation = Depends(get_current_user)
+):
+    return crud.get_applicant_edited_profile(db, appId)
+
+
+@router.put("/updated-applicant-profile/{appId}")
+def edit_applicant_edit_info(
+    appId: str,
+    data: ApplicantEditProfile,
+    db: Session = Depends(get_db),
+    current_user: ApplicantGeneralInformation = Depends(get_current_user)
+):
+    return crud.updated_applicant_profile(db, appId, data)
+
 
