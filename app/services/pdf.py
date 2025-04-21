@@ -32,9 +32,6 @@ class PDFProcessor:
             img.save(img_bytes_io, format="PNG")
             img_bytes_io.seek(0)
 
-            save_path = os.path.join("D:/work/Senior/senior-project-api/app/services/test/", f"page_{page_number + 1}.png")
-            img.save(save_path)
-
             image_bytes_list.append(img_bytes_io.getvalue())  # เพิ่ม bytes เข้า list
 
         pdf_document.close()
@@ -84,9 +81,6 @@ class PDFProcessor:
             img_bytes_io = io.BytesIO()
             img.save(img_bytes_io, format="PNG", optimize=True)
             img_bytes_io.seek(0)
-
-            save_path = os.path.join("D:/work/Senior/senior-project-api/app/services/test/", f"page_{page_number + 1}.png")
-            img.save(save_path)
 
             image_bytes_list.append(img_bytes_io.getvalue())
 

@@ -11,7 +11,8 @@ from app.schemas.interview_committee import (
     InterviewRoundCreate,
     InterviewRoomCreate,
     InterviewRoomUpdate,
-    InterviewEvaUpdate
+    InterviewEvaUpdate,
+    EditInterviewRoom
 )
 
 
@@ -36,7 +37,7 @@ def read_ic(ic_id: str, db: Session = Depends(get_db)):
     return ic
 
 
-@router.put("/update-interviewC/{ic_id}", response_model=InterviewCommitteeResponse)
+@router.put("/update-interview-com/{ic_id}", response_model=InterviewCommitteeResponse)
 def update_ic(ic_id: str, ic_data: InterviewCommitteeUpdate, db: Session = Depends(get_db)):
     updated_ic = crud.update_interview_committee(db, ic_id, ic_data)
     if not updated_ic:
@@ -44,7 +45,7 @@ def update_ic(ic_id: str, ic_data: InterviewCommitteeUpdate, db: Session = Depen
     return updated_ic
 
 
-@router.delete("/delete-interviewC/{ic_id}")
+@router.delete("/delete-interview-com/{ic_id}")
 def delete_ic(ic_id: str, db: Session = Depends(get_db)):
     deleted_ic = crud.delete_interview_committee(db, ic_id)
     if not deleted_ic:
@@ -106,3 +107,11 @@ def update_int_room(room_id: str, EvaRoom_data: InterviewRoomUpdate, db: Session
     if not update_int_room:
         raise HTTPException(status_code=404, detail="Failed to updating room")
     return update_int_room
+
+
+@router.put("/update-interview-room-auto-grouping")
+def update_int_room_auto_group(update_data: EditInterviewRoom, db: Session = Depends(get_db)):
+    update_int_room_auto_group = crud.update_interview_room_auto_group(db, update_data)
+    if not update_int_room_auto_group:
+        raise HTTPException(status_code=404, detail="Failed to updating room")
+    return update_int_room_auto_group
