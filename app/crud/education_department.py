@@ -1,47 +1,13 @@
+import uuid
+from fastapi import HTTPException
 from sqlalchemy.orm import Session
 from collections import defaultdict
 from typing import Optional
 
-from app.models.course_committee import CourseCommittee
-from app.models.education_department import EducationDepartment
-from app.models.interview_committee import InterviewCommittee
-from app.models.public_relations import PublicRelations
-from app.models.interview_round import InterviewRound
-from app.models.applicant_general_information import ApplicantGeneralInformation
-from app.models.applicant_contact import ApplicantContact
-from app.models.applicant_status import ApplicantStatus
-from app.models.admission import Admission
-from app.models.preliminary_evaluation import PreliminaryEvaluation
-from app.models.interview_evaluation import InterviewEvaluation
-from app.models.interview_room_details import InterviewRoomDetails
-from app.models.interview_room_committee import InterviewRoomCommittee
-
-from app.schemas.education_department import (
-    EducationDepartmentCreate,
-    EducationDepartmentUpdate,
-    EduApplicantDataMainPageResponse,
-    EduListApplicantDataMainPageResponse,
-    AdminRolePageResponse,
-    AdminRoleListPageResponse,
-    SummaryInterviewPageResponse,
-    SummaryInterviewListPageResponse,
-    PreEvaUpdateApplicantModel,
-    EduInterviewEvaResponse,
-    EduInterviewEvaListResponse,
-    InterviewRoundResponse,
-    InterviewRoundListResponse,
-    InterviewRoundUpdate,
-    InterviewRoomDetailCreating,
-    InterviewRoomCommitteeCreating,
-    InterviewRoomCommitteeResponse,
-    InterviewRoundDetailResponse,
-    InterviewRoundDetailListResponse,
-    InterviewRoomCommitteeUpdateRequest,
-    InterviewRoomDetailsResponse,
-    InterviewRoomDetailsListResponse,
-    InterviewCommitteeMember
-)
+from app.models import *
 from datetime import datetime
+
+from app.schemas.education_department import *
 
 
 def create_education_department(db: Session, edu_data: EducationDepartmentCreate):
@@ -154,6 +120,46 @@ def update_courseC_to_applicant(db: Session, assignments: list[PreEvaUpdateAppli
             PreliminaryEvaluation.applicantId == item.app_id
         ).update({"courseComId": item.com_id}, synchronize_session=False)
 
+def get_applicant_edu_main_page_by_id(app_id: str, db: Session):
+    query = (
+        db.query(
+            ApplicantGeneralInformation,
+            ApplicantContact,
+            ApplicantStatus,
+            Admission
+        )
+        .outerjoin(ApplicantContact, ApplicantGeneralInformation.applicantId == ApplicantContact.applicantId)
+        .outerjoin(ApplicantStatus, ApplicantGeneralInformation.applicantId == ApplicantStatus.applicantId)
+        .outerjoin(Admission, ApplicantGeneralInformation.programRegistered == Admission.admissionId)
+        .filter(ApplicantGeneralInformation.applicantId == app_id)
+        .first()
+    )
+
+    if not query:
+        return {"message": "Applicant not found"}
+
+    general, contact, status, admit = query
+    response_data = {}
+
+    if general:
+        response_data.update(general.__dict__)
+
+    if contact:
+        response_data.update(contact.__dict__)
+
+    if status:
+        response_data.update(status.__dict__)
+
+    if admit:
+        response_data.update(admit.__dict__)
+
+    return EduApplicantDataViewResponse(**response_data).model_dump(exclude_unset=True)
+
+
+def update_courseC_to_applicant(db: Session, app_id: list[str], com_id: list[str]):
+    for i in range(len(app_id)):
+        update_preEva = db.query(PreliminaryEvaluation).filter(PreliminaryEvaluation.applicantId == app_id[i]).update({"courseComId": com_id[i]}, synchronize_session=False)
+    
     db.commit()
     return {"message": "Assignments updated successfully"}
 
@@ -706,7 +712,41 @@ def get_all_interview_room_details(db: Session) -> InterviewRoundDetailListRespo
 
 
 
+def create_or_updated_applicant_problem(db: Session, app_id: str, edu_id: str, data: str):
+    if data == "เอกสารครบถ้วน":
+        db.query(ApplicantStatus).filter(ApplicantStatus.applicantId == app_id).update(
+            {"docStatus": "03 - เอกสารครบถ้วน"}
+        )
+    else:
+        db.query(ApplicantStatus).filter(ApplicantStatus.applicantId == app_id).update(
+            {"docStatus": "04 - เอกสารไม่ครบถ้วน"}
+        )
+    db.commit()
+
+    applicant = db.query(InformationProblem).filter(InformationProblem.applicantId == app_id).first()
+
+    if applicant:
+        applicant.details = data
+
+        db.commit()
+        db.refresh(applicant)
+
+        return { "message": f"Updated applicant problem with id {app_id} success"}
     
+    applicant = InformationProblem(
+        problemId = uuid.uuid4(),
+        educationId = edu_id,
+        applicantId = app_id,
+        details = data,
+        updateDate = datetime.today().strftime('%Y-%m-%d %H:%M')
+    )
+
+    db.add(applicant)
+    db.commit()
+    db.refresh(applicant)
+
+    return { "message": f"Created applicant problem with id {app_id} success"}
 
 
-
+def get_applicant_information_problem(db: Session, app_id: str):
+    return db.query(InformationProblem).filter(InformationProblem.applicantId == app_id).first()

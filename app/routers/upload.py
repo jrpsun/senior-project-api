@@ -59,7 +59,7 @@ async def upload_file(file: UploadFile = File(...)):
                 extracted_texts.append(text)
 
     elif file.content_type.startswith("image/"):
-        text = ocr_processor.process_id_card_bytes(file_bytes)
+        text = ocr_processor.ocr_tesseract(file_bytes, "eng+tha")
         if text:
             extracted_texts.append(text)
 
@@ -68,7 +68,7 @@ async def upload_file(file: UploadFile = File(...)):
     
     prompt = Prompt.identification_card_prompt(extracted_texts)
     result = Gemini.generate(prompt)
-    print(extracted_texts)
+    
     return result
 
 

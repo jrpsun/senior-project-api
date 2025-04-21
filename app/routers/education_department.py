@@ -22,6 +22,10 @@ from app.schemas.education_department import (
     InterviewRoomCommitteeUpdateRequest,
     InterviewRoomDetailsListResponse
 )
+from fastapi import APIRouter, Body, Depends, HTTPException
+from sqlalchemy.orm import Session
+from app.db import get_db
+from app.schemas.education_department import *
 from app.crud import education_department as crud
 
 router = APIRouter()
@@ -67,6 +71,14 @@ def read_all_applicants(db: Session = Depends(get_db)):
     if not read_all_applicants:
         raise HTTPException(status_code=404, detail="Applicant Information not found")
     return read_all_applicants
+
+
+@router.get("/applicant-edu/{app_id}", response_model=EduApplicantDataViewResponse)
+def get_applicant(app_id: str, db: Session = Depends(get_db)):
+    applicant = crud.get_applicant_edu_main_page_by_id(app_id, db)
+    if not applicant:
+        raise HTTPException(status_code=404, detail=f"Applicant Information with id {app_id} not found")
+    return applicant
 
 
 @router.put("/update-edu-preEva")
@@ -182,3 +194,23 @@ def get_all_rooms_api(db: Session = Depends(get_db)):
     if not rooms.room:
         raise HTTPException(status_code=404, detail="No interview rooms found")
     return rooms
+
+
+@router.put("/update-applicant-status/{applicant_id}/{education_id}")
+def created_or_updated_applicant_problem_status(
+    applicant_id: str,
+    education_id: str,
+    data: str = Body(...),
+    db: Session = Depends(get_db)
+):
+    problem = crud.create_or_updated_applicant_problem(db, applicant_id, education_id, data)
+
+    return problem
+
+
+@router.get("/get-applicant-problem/{applicant_id}", response_model=ApplicantInformationProblem)
+def get_applicant_problem(applicant_id: str, db: Session = Depends(get_db)):
+    applicant_problem = crud.get_applicant_information_problem(db, applicant_id)
+    if not applicant_problem:
+        raise HTTPException(status_code=404, detail="Applicant problem not found")
+    return applicant_problem

@@ -11,7 +11,7 @@ class ApplicantGeneralInformation(Base):
     programRegistered = Column(String(50), ForeignKey('Admission.admissionId'))
     idCardNumber = Column(String(50), nullable=True)
     idCardExpDate = Column(String(50), nullable=True)
-    password = Column(String(50), nullable=True)
+    password = Column(String(255), nullable=True)
     passportId = Column(String(50), nullable=True)
     passportExpDate = Column(String(50), nullable=True)
     gender = Column(String(50), nullable=True)

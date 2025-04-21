@@ -12,3 +12,4 @@ class ApplicantStatus(Base):
     docStatus = Column(String(50), nullable=True)
     paymentStatus = Column(String(50), nullable=True)
     interviewStatus = Column(String(50), nullable=True)
+    applyDate = Column(String(50), nullable=True)
