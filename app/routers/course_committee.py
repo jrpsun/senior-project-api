@@ -34,7 +34,7 @@ def read_all_committees(db: Session = Depends(get_db)):
     return crud.get_all_course_committees(db)
 
 
-@router.put("/{committee_id}", response_model=CourseCommitteeResponse)
+@router.put("/update/{committee_id}", response_model=CourseCommitteeResponse)
 def update_committee(committee_id: str, committee_data: CourseCommitteeUpdate, db: Session = Depends(get_db)):
     updated_committee = crud.update_course_committee(db, committee_id, committee_data)
     if not updated_committee:

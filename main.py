@@ -13,6 +13,7 @@ from app.routers import (
     applicant,
     excel,
     upload,
+    auth
 )
 
 load_dotenv()
@@ -29,6 +30,7 @@ app.include_router(admisstion.router, prefix="/admission", tags=["Admission"])
 app.include_router(applicant.router, prefix="/applicant", tags=["Applicant"])
 app.include_router(excel.router, prefix="/excel", tags=["Excel"])
 app.include_router(upload.router, prefix="/upload", tags=["Upload"])
+app.include_router(auth.router, prefix="/auth", tags=["Authen"])
 
 
 @app.get("/api/data")
