@@ -120,6 +120,10 @@ def update_courseC_to_applicant(db: Session, assignments: list[PreEvaUpdateAppli
             PreliminaryEvaluation.applicantId == item.app_id
         ).update({"courseComId": item.com_id}, synchronize_session=False)
 
+
+    db.commit()
+    return {"message": "Assignments updated successfully"}
+
 def get_applicant_edu_main_page_by_id(app_id: str, db: Session):
     query = (
         db.query(
@@ -154,14 +158,6 @@ def get_applicant_edu_main_page_by_id(app_id: str, db: Session):
         response_data.update(admit.__dict__)
 
     return EduApplicantDataViewResponse(**response_data).model_dump(exclude_unset=True)
-
-
-def update_courseC_to_applicant(db: Session, app_id: list[str], com_id: list[str]):
-    for i in range(len(app_id)):
-        update_preEva = db.query(PreliminaryEvaluation).filter(PreliminaryEvaluation.applicantId == app_id[i]).update({"courseComId": com_id[i]}, synchronize_session=False)
-    
-    db.commit()
-    return {"message": "Assignments updated successfully"}
 
 
 

@@ -9,17 +9,6 @@ from app.services.auth import get_current_user, perform_refresh_token
 router = APIRouter()
 
 
-@router.post("/register")
-def create_applicant(applicant_data: ApplicantCreate, db: Session = Depends(get_db)):
-    return crud.create_applicant(db, applicant_data)
-
-
-@router.post("/login")
-def login_applicant(request: ApplicantLoginRequest, response: Response, db: Session = Depends(get_db)):
-    print("id", request.idNumber, request.password)
-    return crud.applicant_login(response, db, request.idNumber, request.password)
-
-
 @router.put("/general/{applicant_id}")
 def update_applicant_general_info(applicant_id: str, update_data: ApplicantGeneralInformationUpdate, db: Session = Depends(get_db)):
     updated_applicant_general = crud.update_applicant_general_info(db, applicant_id, update_data)
