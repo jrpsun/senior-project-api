@@ -63,11 +63,13 @@ def get_all_applicants_edu_main_page(db: Session):
             ApplicantGeneralInformation,
             ApplicantContact,
             ApplicantStatus,
-            Admission
+            Admission,
+            ApplicantAdmissionCancel
         )
         .outerjoin(ApplicantContact, ApplicantGeneralInformation.applicantId == ApplicantContact.applicantId)
         .outerjoin(ApplicantStatus, ApplicantGeneralInformation.applicantId == ApplicantStatus.applicantId)
         .outerjoin(Admission, ApplicantGeneralInformation.programRegistered == Admission.admissionId)
+        .outerjoin(ApplicantAdmissionCancel, ApplicantGeneralInformation.applicantId == ApplicantAdmissionCancel.applicantId)
     ).all()
 
     print(query)
@@ -75,7 +77,7 @@ def get_all_applicants_edu_main_page(db: Session):
         return {"Message": "Applicant not found"}
     
     response_list = []
-    for general, contact, status, admit in query:
+    for general, contact, status, admit, cancel in query:
         response_data = {}
 
         firstname = (
@@ -105,6 +107,9 @@ def get_all_applicants_edu_main_page(db: Session):
         if admit:
             response_data.update(admit.__dict__)
 
+        if cancel: 
+            response_data.update(cancel.__dict__)
+
         response_list.append(EduApplicantDataMainPageResponse(**response_data).model_dump(exclude_unset=True))
 
 
@@ -120,6 +125,9 @@ def update_courseC_to_applicant(db: Session, assignments: list[PreEvaUpdateAppli
             PreliminaryEvaluation.applicantId == item.app_id
         ).update({"courseComId": item.com_id}, synchronize_session=False)
 
+        db.query(ApplicantStatus).filter(
+            ApplicantStatus.applicantId == item.app_id
+        ).update({"admissionStatus": "03 - รอพิจารณา"}, synchronize_session=False)
 
     db.commit()
     return {"message": "Assignments updated successfully"}
@@ -158,6 +166,7 @@ def get_applicant_edu_main_page_by_id(app_id: str, db: Session):
         response_data.update(admit.__dict__)
 
     return EduApplicantDataViewResponse(**response_data).model_dump(exclude_unset=True)
+
 
 
 

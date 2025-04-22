@@ -15,6 +15,7 @@ class InterviewEvaluation(Base):
     interviewComId = Column(String(50), ForeignKey('Interview_Committee.interviewComId'))
     applicantId = Column(String(50), ForeignKey('Applicant_General_Information.applicantId'))
     interviewRoundId = Column(String(50), ForeignKey('Interview_Round.interviewRoundId'))
+    educationId = Column(String(50), ForeignKey('Education_Department.educationId'))
     englishScore = Column(Integer, nullable=True)
     personalityScore = Column(Integer, nullable=True)
     intensionScore = Column(Integer, nullable=True)
@@ -31,3 +32,4 @@ class InterviewEvaluation(Base):
     computerRemark = Column(String(255), nullable=True)
     totalRemark = Column(String(255), nullable=True)
     outstandingLevel = Column(String(10), nullable=True)
+    

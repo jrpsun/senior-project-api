@@ -43,6 +43,8 @@ class EduApplicantDataMainPageResponse(BaseModel):
     paymentStatus: Optional[str] = None
     applicantEmail: Optional[str] = None
     applicantPhone: Optional[str] = None
+    reason: Optional[str] = None
+    moreDetail: Optional[str] = None
 
     class Config:
         from_attributes = True
