@@ -171,22 +171,23 @@ def get_pre_eva_page(db :Session, applicant_id: str):
 
 
 # Pre Eva Page
-def update_pre_eva_to_applicant(db: Session, app_id: str, com_id: str, preEvaResult: str, comment: Optional[str] = None):
-    status = "04 - ผ่านการพิจารณา" if preEvaResult == "ผ่านการคัดกรอง" else "05 - ไม่ผ่านการพิจารณา"
+def update_pre_eva_to_applicant(db: Session, payload: PreEvaRequest):
+    status = "04 - ผ่านการพิจารณา" if payload.preEvaResult == "ผ่านการคัดกรอง" else "05 - ไม่ผ่านการพิจารณา"
 
     pre_eva_updated = db.query(PreliminaryEvaluation).filter(
-        PreliminaryEvaluation.applicantId == app_id,
-        PreliminaryEvaluation.courseComId == com_id
+        PreliminaryEvaluation.applicantId == payload.app_id,
+        PreliminaryEvaluation.courseComId == payload.com_id
     ).update(
         {
-            PreliminaryEvaluation.preliminaryEva: preEvaResult,
-            PreliminaryEvaluation.preliminaryComment: comment
+            PreliminaryEvaluation.preliminaryEva: payload.preEvaResult,
+            PreliminaryEvaluation.preliminaryComment: payload.comment,
+            PreliminaryEvaluation.preEvaDate: payload.preEvaDate
         },
         synchronize_session=False
     )
 
     applicant_status_updated = db.query(ApplicantStatus).filter(
-        ApplicantStatus.applicantId == app_id
+        ApplicantStatus.applicantId == payload.app_id
     ).update(
         {
             ApplicantStatus.admissionStatus: status

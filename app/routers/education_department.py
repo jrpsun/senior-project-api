@@ -1,31 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException
 from typing import Optional
-from sqlalchemy.orm import Session
-from app.db import get_db
-from app.schemas.education_department import (
-    EducationDepartmentCreate,
-    EducationDepartmentUpdate,
-    EducationDepartmentResponse,
-    EduListApplicantDataMainPageResponse,
-    AdminRoleListPageResponse,
-    SummaryInterviewPageResponse,
-    SummaryInterviewListPageResponse,
-    PreEvaUpdateApplicantModel,
-    EduInterviewEvaListResponse,
-    InterviewRoundResponse,
-    InterviewRoundListResponse,
-    InterviewRoundUpdate,
-    InterviewRoomDetailCreating,
-    InterviewRoomCommitteeCreating,
-    InterviewRoomCommitteeResponse,
-    InterviewRoundDetailListResponse,
-    InterviewRoomCommitteeUpdateRequest,
-    InterviewRoomDetailsListResponse
-)
+from app.schemas.education_department import *
 from fastapi import APIRouter, Body, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.db import get_db
-from app.schemas.education_department import *
 from app.crud import education_department as crud
 
 router = APIRouter()

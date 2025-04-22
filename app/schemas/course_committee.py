@@ -74,3 +74,4 @@ class PreEvaRequest(BaseModel):
     com_id: str
     preEvaResult: str
     comment: Optional[str] = None
+    preEvaDate: str

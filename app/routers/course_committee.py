@@ -34,7 +34,7 @@ def read_all_committees(db: Session = Depends(get_db)):
     return crud.get_all_course_committees(db)
 
 
-@router.put("/update/{committee_id}", response_model=CourseCommitteeResponse)
+@router.put("/update-courseC/{committee_id}", response_model=CourseCommitteeResponse)
 def update_committee(committee_id: str, committee_data: CourseCommitteeUpdate, db: Session = Depends(get_db)):
     updated_committee = crud.update_course_committee(db, committee_id, committee_data)
     if not updated_committee:
@@ -42,7 +42,7 @@ def update_committee(committee_id: str, committee_data: CourseCommitteeUpdate, d
     return updated_committee
 
 
-@router.delete("/{committee_id}")
+@router.delete("/delete-courseC/{committee_id}")
 def delete_committee(committee_id: str, db: Session = Depends(get_db)):
     deleted_committee = crud.delete_course_committee(db, committee_id)
     if not deleted_committee:
@@ -78,10 +78,7 @@ def get_pre_eva_info(applican_id: str, db: Session = Depends(get_db)):
 def update_pre_eva_endpoint(payload: PreEvaRequest, db: Session = Depends(get_db)):
     updated = crud.update_pre_eva_to_applicant(
         db,
-        app_id=payload.app_id,
-        com_id=payload.com_id,
-        preEvaResult=payload.preEvaResult,
-        comment=payload.comment
+        payload
     )
     
     if not updated:
