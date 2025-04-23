@@ -16,12 +16,12 @@ def create_pr(pr_data: PublicRelationsCreate, db: Session = Depends(get_db)):
     return crud.create_public_relation(db, pr_data)
 
 # 🔹 Read All (GET)
-@router.get("/", response_model=list[PublicRelationsResponse])
+@router.get("/get-all-pr", response_model=list[PublicRelationsResponse])
 def read_prs(db: Session = Depends(get_db)):
     return crud.get_public_relations(db)
 
 # 🔹 Read One (GET by ID)
-@router.get("/{pr_id}", response_model=PublicRelationsResponse)
+@router.get("/get-pr/{pr_id}", response_model=PublicRelationsResponse)
 def read_pr(pr_id: str, db: Session = Depends(get_db)):
     pr = crud.get_public_relation_by_id(db, pr_id)
     if not pr:
@@ -29,7 +29,7 @@ def read_pr(pr_id: str, db: Session = Depends(get_db)):
     return pr
 
 # 🔹 Update (PUT)
-@router.put("/{pr_id}", response_model=PublicRelationsResponse)
+@router.put("/update-pr/{pr_id}", response_model=PublicRelationsResponse)
 def update_pr(pr_id: str, pr_data: PublicRelationsUpdate, db: Session = Depends(get_db)):
     pr = crud.update_public_relation(db, pr_id, pr_data)
     if not pr:
@@ -37,7 +37,7 @@ def update_pr(pr_id: str, pr_data: PublicRelationsUpdate, db: Session = Depends(
     return pr
 
 # 🔹 Delete (DELETE)
-@router.delete("/{pr_id}")
+@router.delete("/delete-pr/{pr_id}")
 def delete_pr(pr_id: str, db: Session = Depends(get_db)):
     pr = crud.delete_public_relation(db, pr_id)
     if not pr:

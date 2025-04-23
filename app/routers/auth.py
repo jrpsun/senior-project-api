@@ -12,12 +12,12 @@ router = APIRouter()
 
 
 
-@router.post("/user/register")
+@router.post("/applicant/register")
 def create_applicant(applicant_data: ApplicantCreate, db: Session = Depends(get_db)):
     return crud.create_applicant(db, applicant_data)
 
 
-@router.post("/user/login")
+@router.post("/applicant/login")
 def login_applicant(request: ApplicantLoginRequest, response: Response, db: Session = Depends(get_db)):
     return crud.applicant_login(response, db, request.idNumber, request.password)
 
