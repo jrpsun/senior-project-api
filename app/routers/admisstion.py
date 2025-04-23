@@ -27,7 +27,7 @@ def read_admission(admission_id: str, db: Session = Depends(get_db)):
 
 
 @router.get("/", response_model=list[AdmissionResponse])
-def read_all_admissions(db: Session = Depends(get_db), current_user: ApplicantGeneralInformation = Depends(get_current_user)):
+def read_all_admissions(db: Session = Depends(get_db)):
     return crud.get_all_admissions(db)
 
 
