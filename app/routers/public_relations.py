@@ -11,7 +11,7 @@ from app.schemas.public_relations import (
 router = APIRouter()
 
 # 🔹 Create (POST)
-@router.post("/", response_model=PublicRelationsResponse)
+@router.post("/", response_model=PublicRelationsCreate)
 def create_pr(pr_data: PublicRelationsCreate, db: Session = Depends(get_db)):
     return crud.create_public_relation(db, pr_data)
 

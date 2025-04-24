@@ -436,6 +436,7 @@ class EduApplicantDataViewResponse(BaseModel):
     docStatus: Optional[str] = None
     paymentStatus: Optional[str] = None
     academicYear: Optional[str] = None
+    interviewStatus: Optional[str] = None
 
     class Config:
         from_attributes = True

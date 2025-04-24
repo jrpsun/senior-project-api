@@ -90,7 +90,7 @@ def get_applicant_interview_eva(applicant_id: str, committee_id: Optional[str] =
     return get_applicant_interview_eva
 
 
-@router.get("/get-applicant-interview-eva/{applicant_id}", response_model=EduInterviewEvaListResponse)
+@router.get("/get-applicant-interview-evas/{applicant_id}", response_model=EduInterviewEvaListResponse)
 def get_applicant_interview_eva(applicant_id: str, db: Session = Depends(get_db)):
     get_applicant_interview_eva = crud.get_all_applicant_result_interview_eva_page(db, applicant_id)
     if not get_applicant_interview_eva:
