@@ -149,3 +149,4 @@ class EditInterviewRoom(BaseModel):
     interviewRoom: Optional[str] = None
     interviewRoundId: Optional[str] = None
     interviewTime: Optional[str] = None
+

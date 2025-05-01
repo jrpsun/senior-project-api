@@ -33,4 +33,5 @@ class InterviewEvaluation(Base):
     computerRemark = Column(String(255), nullable=True)
     totalRemark = Column(String(255), nullable=True)
     outstandingLevel = Column(String(10), nullable=True)
+    evaDate = Column(String(50), nullable=True)
     
