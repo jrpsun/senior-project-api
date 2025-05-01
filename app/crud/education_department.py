@@ -1,5 +1,6 @@
 import uuid
 from fastapi import HTTPException
+from sqlalchemy import and_
 from sqlalchemy.orm import Session
 from collections import defaultdict
 from typing import Optional
@@ -56,6 +57,12 @@ def delete_education_department(db: Session, edu_id: str):
         db.commit()
     return edu_record
 
+def model_to_dict(obj):
+    if obj is None:
+        return None
+    obj_dict = obj.__dict__.copy()
+    obj_dict.pop('_sa_instance_state', None)
+    return obj_dict
 # edu screening page
 def get_all_applicants_edu_main_page(db: Session):
     query = (
@@ -63,57 +70,55 @@ def get_all_applicants_edu_main_page(db: Session):
             ApplicantGeneralInformation,
             ApplicantContact,
             ApplicantStatus,
+            ApplicantAdmissionCancel,
             Admission,
-            ApplicantAdmissionCancel
+            ApplicantRegistrations
         )
-        .outerjoin(ApplicantContact, ApplicantGeneralInformation.applicantId == ApplicantContact.applicantId)
-        .outerjoin(ApplicantStatus, ApplicantGeneralInformation.applicantId == ApplicantStatus.applicantId)
+        .outerjoin(
+            ApplicantContact,
+            and_(
+                ApplicantGeneralInformation.applicantId == ApplicantContact.applicantId,
+                ApplicantGeneralInformation.programRegistered == ApplicantContact.programRegistered
+            )
+        )
+        .outerjoin(
+            ApplicantStatus,
+            and_(
+                ApplicantGeneralInformation.applicantId == ApplicantStatus.applicantId,
+                ApplicantGeneralInformation.programRegistered == ApplicantStatus.programRegistered
+            )
+        )
+        .outerjoin(
+            ApplicantAdmissionCancel,
+            and_(
+                ApplicantGeneralInformation.applicantId == ApplicantAdmissionCancel.applicantId,
+                ApplicantGeneralInformation.programRegistered == ApplicantAdmissionCancel.programRegistered
+            )
+        )
         .outerjoin(Admission, ApplicantGeneralInformation.programRegistered == Admission.admissionId)
-        .outerjoin(ApplicantAdmissionCancel, ApplicantGeneralInformation.applicantId == ApplicantAdmissionCancel.applicantId)
+        .outerjoin(ApplicantRegistrations, ApplicantGeneralInformation.applicantId == ApplicantRegistrations.applicantId)
     ).all()
+    result = []
+    for general, contact, status, cancel, admit, register in query:
+        data = {
+            "roundName": admit.roundName if admit.roundName else None,
+            "applicantId": register.applicantId,
+            "applicantNumber": general.applicant_number,
+            "admissionId": admit.admissionId,
+            "firstnameEN": register.firstnameTH if register.firstnameTH not in [None, ""] else register.firstnameEN,
+            "lastnameEN": register.lastnameTH if register.lastnameTH not in [None, ""] else register.lastnameEN,
+            "program": admit.program if admit.program else None,
+            "admissionStatus": status.admissionStatus if status.admissionStatus else None,
+            "docStatus": status.docStatus if status.docStatus else None,
+            "paymentStatus": status.paymentStatus if status.paymentStatus else None,
+            "applicantEmail": register.applicantEmail if register.applicantEmail else None,
+            "applicantPhone": contact.applicantPhone if contact.applicantPhone else None,
+            "reason": cancel.reason if cancel else None,
+            "moreDetail": cancel.moreDetail if cancel else None
+        }
+        result.append(data)
 
-    print(query)
-    if not query:
-        return {"Message": "Applicant not found"}
-    
-    response_list = []
-    for general, contact, status, admit, cancel in query:
-        response_data = {}
-
-        firstname = (
-            general.firstnameTH if general.firstnameTH and general.firstnameTH.lower() != "string"
-            else general.firstnameEN
-        )
-        lastname = (
-            general.lastnameTH if general.lastnameTH and general.lastnameTH.lower() != "string"
-            else general.lastnameEN
-        )
-
-        response_data["firstnameEN"] = firstname
-        response_data["lastnameEN"] = lastname
-
-        if general:
-            response_data.update({
-                k: v for k, v in general.__dict__.items()
-                if k not in ["firstnameTH", "lastnameTH", "firstnameEN", "lastnameEN"]
-            })
-
-        if contact:
-            response_data.update(contact.__dict__)
-
-        if status:
-            response_data.update(status.__dict__)
-
-        if admit:
-            response_data.update(admit.__dict__)
-
-        if cancel: 
-            response_data.update(cancel.__dict__)
-
-        response_list.append(EduApplicantDataMainPageResponse(**response_data).model_dump(exclude_unset=True))
-
-
-    return EduListApplicantDataMainPageResponse(applicants=response_list)
+    return result
 
 
 def update_courseC_to_applicant(db: Session, assignments: list[PreEvaUpdateApplicantModel]):
@@ -132,17 +137,31 @@ def update_courseC_to_applicant(db: Session, assignments: list[PreEvaUpdateAppli
     db.commit()
     return {"message": "Assignments updated successfully"}
 
-def get_applicant_edu_main_page_by_id(app_id: str, db: Session):
+def get_applicant_edu_main_page_by_id(app_id: str, admId: str, db: Session):
     query = (
         db.query(
             ApplicantGeneralInformation,
             ApplicantContact,
             ApplicantStatus,
-            Admission
+            Admission,
+            ApplicantRegistrations
         )
-        .outerjoin(ApplicantContact, ApplicantGeneralInformation.applicantId == ApplicantContact.applicantId)
-        .outerjoin(ApplicantStatus, ApplicantGeneralInformation.applicantId == ApplicantStatus.applicantId)
+        .outerjoin(
+            ApplicantContact,
+            and_(
+                ApplicantGeneralInformation.applicantId == ApplicantContact.applicantId,
+                ApplicantGeneralInformation.programRegistered == ApplicantContact.programRegistered
+            )
+        )
+        .outerjoin(
+            ApplicantStatus,
+            and_(
+                ApplicantGeneralInformation.applicantId == ApplicantStatus.applicantId,
+                ApplicantGeneralInformation.programRegistered == ApplicantStatus.programRegistered
+            )
+        )
         .outerjoin(Admission, ApplicantGeneralInformation.programRegistered == Admission.admissionId)
+        .outerjoin(ApplicantRegistrations, ApplicantGeneralInformation.applicantId == ApplicantRegistrations.applicantId)
         .filter(ApplicantGeneralInformation.applicantId == app_id)
         .first()
     )
@@ -150,7 +169,7 @@ def get_applicant_edu_main_page_by_id(app_id: str, db: Session):
     if not query:
         return {"message": "Applicant not found"}
 
-    general, contact, status, admit = query
+    general, contact, status, admit, regis = query
     response_data = {}
 
     if general:
@@ -164,6 +183,9 @@ def get_applicant_edu_main_page_by_id(app_id: str, db: Session):
 
     if admit:
         response_data.update(admit.__dict__)
+
+    if regis:
+        response_data.update(regis.__dict__)
 
     return EduApplicantDataViewResponse(**response_data).model_dump(exclude_unset=True)
 
@@ -717,18 +739,28 @@ def get_all_interview_room_details(db: Session) -> InterviewRoundDetailListRespo
 
 
 
-def create_or_updated_applicant_problem(db: Session, app_id: str, edu_id: str, data: str):
+def create_or_updated_applicant_problem(db: Session, app_id: str, edu_id: str, admId: str, data: str):
     if data == "เอกสารครบถ้วน":
-        db.query(ApplicantStatus).filter(ApplicantStatus.applicantId == app_id).update(
+        (db.query(ApplicantStatus)
+         .filter(ApplicantStatus.applicantId == app_id)
+         .filter(ApplicantStatus.programRegistered == admId)
+         .update(
             {"docStatus": "03 - เอกสารครบถ้วน"}
-        )
+        ))
     else:
-        db.query(ApplicantStatus).filter(ApplicantStatus.applicantId == app_id).update(
+        (db.query(ApplicantStatus)
+         .filter(ApplicantStatus.applicantId == app_id)
+         .filter(ApplicantStatus.programRegistered == admId)
+         .update(
             {"docStatus": "04 - เอกสารไม่ครบถ้วน"}
-        )
+        ))
     db.commit()
 
-    applicant = db.query(InformationProblem).filter(InformationProblem.applicantId == app_id).first()
+    applicant = (db.query(InformationProblem)
+                 .filter(InformationProblem.applicantId == app_id)
+                 .filter(InformationProblem.programRegistered == admId)
+                 .first()
+                )
 
     if applicant:
         applicant.details = data
@@ -742,6 +774,7 @@ def create_or_updated_applicant_problem(db: Session, app_id: str, edu_id: str, d
         problemId = uuid.uuid4(),
         educationId = edu_id,
         applicantId = app_id,
+        programRegistered = admId,
         details = data,
         updateDate = datetime.today().strftime('%Y-%m-%d %H:%M')
     )
@@ -753,5 +786,14 @@ def create_or_updated_applicant_problem(db: Session, app_id: str, edu_id: str, d
     return { "message": f"Created applicant problem with id {app_id} success"}
 
 
-def get_applicant_information_problem(db: Session, app_id: str):
-    return db.query(InformationProblem).filter(InformationProblem.applicantId == app_id).first()
+def get_applicant_information_problem(db: Session, app_id: str, admId):
+    problems = (db.query(InformationProblem)
+                .filter(InformationProblem.applicantId == app_id)
+                .filter(InformationProblem.programRegistered == admId)
+                .first()
+            )
+    
+    if not problems:
+        raise HTTPException(status_code=404, detail=f"Applicant with ID: {app_id} not found")
+    
+    return problems

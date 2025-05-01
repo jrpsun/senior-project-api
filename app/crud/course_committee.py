@@ -1,5 +1,8 @@
+from fastapi import HTTPException
+from sqlalchemy import and_
 from sqlalchemy.orm import Session
 from typing import Optional
+from app.models.applicant_registrations import ApplicantRegistrations
 from app.models.course_committee import CourseCommittee
 from app.models.applicant_general_information import ApplicantGeneralInformation
 from app.models.preliminary_evaluation import PreliminaryEvaluation
@@ -36,7 +39,12 @@ def create_course_committee(db: Session, committee_data: CourseCommitteeCreate):
 
 
 def get_all_course_committees(db: Session):
-    return db.query(CourseCommittee).all()
+    query = db.query(CourseCommittee).all()
+
+    if not query:
+        raise HTTPException(status_code=404, detail="Course Committee not found")
+    
+    return query
 
 
 def get_course_committee(db: Session, committee_id: str):
@@ -79,19 +87,34 @@ def get_all_applicants_course_main_page(db: Session, committee_id: Optional[str]
             ApplicantStatus.paymentStatus.label("paymentStatus"),
             Admission.roundName.label("roundName"),
             Admission.program.label("program"),
-            ApplicantGeneralInformation.firstnameEN.label("firstnameEN"),
-            ApplicantGeneralInformation.lastnameEN.label("lastnameEN"),
-            ApplicantGeneralInformation.firstnameTH.label("firstnameTH"),
-            ApplicantGeneralInformation.lastnameTH.label("lastnameTH"),
+            ApplicantRegistrations.firstnameEN.label("firstnameEN"),
+            ApplicantRegistrations.lastnameEN.label("lastnameEN"),
+            ApplicantRegistrations.firstnameTH.label("firstnameTH"),
+            ApplicantRegistrations.lastnameTH.label("lastnameTH"),
+            ApplicantGeneralInformation.applicant_number.label("applicantNumber"),
         )
     
     if committee_id:
         query = query.filter(PreliminaryEvaluation.courseComId == committee_id)
-    
+
     query = query.outerjoin(CourseCommittee, PreliminaryEvaluation.courseComId == CourseCommittee.courseComId)
-    query = query.outerjoin(ApplicantGeneralInformation, PreliminaryEvaluation.applicantId == ApplicantGeneralInformation.applicantId)
-    query = query.outerjoin(Admission, ApplicantGeneralInformation.programRegistered == Admission.admissionId)
-    query = query.outerjoin(ApplicantStatus, ApplicantGeneralInformation.applicantId == ApplicantStatus.applicantId)
+    query = query.outerjoin(
+        ApplicantStatus,
+        and_(
+            PreliminaryEvaluation.applicantId == ApplicantStatus.applicantId,
+            PreliminaryEvaluation.programRegistered == ApplicantStatus.programRegistered
+        )
+    )
+    query = query.outerjoin(ApplicantRegistrations, PreliminaryEvaluation.applicantId == ApplicantRegistrations.applicantId)
+    query = query.outerjoin(Admission, PreliminaryEvaluation.programRegistered == Admission.admissionId)
+    query = query.outerjoin(
+        ApplicantGeneralInformation,
+        and_(
+            PreliminaryEvaluation.applicantId == ApplicantGeneralInformation.applicantId,
+            PreliminaryEvaluation.programRegistered == ApplicantGeneralInformation.programRegistered
+        )
+    )
+    
     
     result = query.all()
 
@@ -106,7 +129,7 @@ def get_all_applicants_course_main_page(db: Session, committee_id: Optional[str]
         response_data = {
             "roundName": row.roundName,
             "applicantId": row.applicantId,
-            "firstnameEN": firstname,  
+            "firstnameEN": firstname,
             "lastnameEN": lastname,
             "fullnameEN": f"{firstname} {lastname}",
             "program": row.program,
@@ -119,7 +142,8 @@ def get_all_applicants_course_main_page(db: Session, committee_id: Optional[str]
             "lastName": row.courseC_lastName,
             "preEvaDate": row.preEvaDate,
             "preliminaryEva": row.preliminaryEva,
-            "preliminaryComment": row.preliminaryComment
+            "preliminaryComment": row.preliminaryComment,
+            "applicantNumber": row.applicantNumber
         }
 
         response_list.append(CourseApplicantDataMainPageResponse(**response_data).model_dump(exclude_unset=True))

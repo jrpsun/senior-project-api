@@ -48,6 +48,7 @@ class CourseApplicantDataMainPageResponse(BaseModel):
     preEvaDate : Optional[str] = None
     preliminaryEva: Optional[str] = None
     preliminaryComment: Optional[str] = None
+    applicantNumber: Optional[str] = None
 
     class Config:
         from_attributes = True
