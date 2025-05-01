@@ -3,11 +3,10 @@ from fastapi import HTTPException
 from sqlalchemy import and_
 from sqlalchemy.orm import Session
 from collections import defaultdict
-from typing import Optional
-
+from typing import Optional, List, Dict
+from sqlalchemy import and_
 from app.models import *
 from datetime import datetime
-
 from app.schemas.education_department import *
 
 
@@ -204,10 +203,10 @@ def get_all_admins_manage_role_page(db: Session):
 
     # Role name for each model
     role_name_map = {
-        CourseCommittee: "Course Committee",
-        EducationDepartment: "Education Department",
-        InterviewCommittee: "Interview Committee",
-        PublicRelations: "Public Relations",
+        CourseCommittee: "กรรมการหลักสูตร",
+        EducationDepartment: "เจ้าหน้าที่งานการศึกษา",
+        InterviewCommittee: "กรรมการสัมภาษณ์",
+        PublicRelations: "ประชาสัมพันธ์ (PR)",
     }
 
     # Dictionary to group unique users by email
@@ -280,6 +279,8 @@ def get_all_applicant_summary_interview_page(db: Session):
             InterviewEvaluation.interviewResult.label("interviewResult"),
             ApplicantGeneralInformation.firstnameEN.label("firstnameEN"),
             ApplicantGeneralInformation.lastnameEN.label("lastnameEN"),
+            ApplicantGeneralInformation.firstnameTH.label("firstnameTH"),
+            ApplicantGeneralInformation.lastnameTH.label("lastnameTH"),
             ApplicantGeneralInformation.applicantId.label("applicantId_gi"),  # To ensure fallback
             ApplicantGeneralInformation.programRegistered.label("admissionId"),
             Admission.program.label("program"),
@@ -302,6 +303,9 @@ def get_all_applicant_summary_interview_page(db: Session):
     })
 
     for row in query:
+        firstname = row.firstnameTH if row.firstnameTH and row.firstnameTH.lower() != "string" else row.firstnameEN
+        lastname = row.lastnameTH if row.lastnameTH and row.lastnameTH.lower() != "string" else row.lastnameEN
+
         applicant_id = row.applicantId or row.applicantId_gi  # fallback in case no interview
         if "interviewStatus" not in grouped_applicants[applicant_id]:
             grouped_applicants[applicant_id].update({
@@ -318,9 +322,9 @@ def get_all_applicant_summary_interview_page(db: Session):
                 "computerScore": row.computerScore,
                 "totalScore": row.totalScore,
                 "applicantId": applicant_id,
-                "firstnameEN": row.firstnameEN,
-                "lastnameEN": row.lastnameEN,
-                "fullnameEN": f"{row.firstnameEN or ''} {row.lastnameEN or ''}".strip(),
+                "firstnameEN": firstname,
+                "lastnameEN": lastname,
+                "fullnameEN": f"{firstname} {lastname}".strip(),
                 "programRegistered": row.admissionId,
                 "program": row.program,
                 "roundName": row.roundName,
@@ -409,11 +413,14 @@ def get_all_applicant_result_interview_eva_page(db: Session, applicant_id: str, 
             query = (
                 db.query(
                     InterviewEvaluation.interviewComId.label("interviewComId"),
+                    InterviewEvaluation.educationId.label("educationId"),
                     InterviewEvaluation.interviewRoom.label("interviewRoom"),
+
                     ApplicantGeneralInformation.firstnameTH.label("firstnameTH"),
                     ApplicantGeneralInformation.lastnameTH.label("lastnameTH"),
                     ApplicantGeneralInformation.firstnameEN.label("firstnameEN"),
                     ApplicantGeneralInformation.lastnameEN.label("lastnameEN"),
+
                     InterviewEvaluation.interviewDate.label("interviewDate"),
                     InterviewEvaluation.interviewTime.label("interviewTime"),
                     InterviewEvaluation.englishScore.label("englishScore"),
@@ -428,47 +435,61 @@ def get_all_applicant_result_interview_eva_page(db: Session, applicant_id: str, 
                     InterviewEvaluation.totalRemark.label("totalRemark"),
                     InterviewEvaluation.comment.label("comment"),
                     InterviewEvaluation.interviewResult.label("interviewResult"),
+                    InterviewEvaluation.evaDate.label("evaDate"),
+                    InterviewEvaluation.outstandingLevel.label("outstandingLevel"),
+
                     InterviewCommittee.prefix.label("cPrefix"),
                     InterviewCommittee.firstName.label("cFirstName"),
                     InterviewCommittee.lastName.label("cLastName"),
+
+                    EducationDepartment.firstName.label("educationName")
                 )
                 .filter(InterviewEvaluation.applicantId == applicant_id)
                 .filter(InterviewEvaluation.interviewComId == committee_id)
                 .outerjoin(InterviewCommittee, InterviewEvaluation.interviewComId == InterviewCommittee.interviewComId)
+                .outerjoin(EducationDepartment, InterviewEvaluation.educationId == EducationDepartment.educationId)
                 .outerjoin(ApplicantGeneralInformation, InterviewEvaluation.applicantId == ApplicantGeneralInformation.applicantId)
-
+        
         ).all()
     else:
         query = (
             db.query(
-                InterviewEvaluation.interviewComId.label("interviewComId"),
-                InterviewEvaluation.interviewRoom.label("interviewRoom"),
-                ApplicantGeneralInformation.firstnameTH.label("firstnameTH"),
-                ApplicantGeneralInformation.lastnameTH.label("lastnameTH"),
-                ApplicantGeneralInformation.firstnameEN.label("firstnameEN"),
-                ApplicantGeneralInformation.lastnameEN.label("lastnameEN"),
-                InterviewEvaluation.interviewDate.label("interviewDate"),
-                InterviewEvaluation.interviewTime.label("interviewTime"),
-                InterviewEvaluation.englishScore.label("englishScore"),
-                InterviewEvaluation.personalityScore.label("personalityScore"),
-                InterviewEvaluation.intensionScore.label("intensionScore"),
-                InterviewEvaluation.computerScore.label("computerScore"),
-                InterviewEvaluation.totalScore.label("totalScore"),
-                InterviewEvaluation.englishRemark.label("englishRemark"),
-                InterviewEvaluation.personalityRemark.label("personalityRemark"),
-                InterviewEvaluation.intensionRemark.label("intensionRemark"),
-                InterviewEvaluation.computerRemark.label("computerRemark"),
-                InterviewEvaluation.totalRemark.label("totalRemark"),
-                InterviewEvaluation.comment.label("comment"),
-                InterviewEvaluation.interviewResult.label("interviewResult"),
-                InterviewCommittee.prefix.label("cPrefix"),
-                InterviewCommittee.firstName.label("cFirstName"),
-                InterviewCommittee.lastName.label("cLastName"),
+            InterviewEvaluation.interviewComId.label("interviewComId"),
+            InterviewEvaluation.interviewRoom.label("interviewRoom"),
+            InterviewEvaluation.educationId.label("educationId"),
+
+            ApplicantGeneralInformation.firstnameTH.label("firstnameTH"),
+            ApplicantGeneralInformation.lastnameTH.label("lastnameTH"),
+            ApplicantGeneralInformation.firstnameEN.label("firstnameEN"),
+            ApplicantGeneralInformation.lastnameEN.label("lastnameEN"),
+
+            InterviewEvaluation.interviewDate.label("interviewDate"),
+            InterviewEvaluation.interviewTime.label("interviewTime"),
+            InterviewEvaluation.englishScore.label("englishScore"),
+            InterviewEvaluation.personalityScore.label("personalityScore"),
+            InterviewEvaluation.intensionScore.label("intensionScore"),
+            InterviewEvaluation.computerScore.label("computerScore"),
+            InterviewEvaluation.totalScore.label("totalScore"),
+            InterviewEvaluation.englishRemark.label("englishRemark"),
+            InterviewEvaluation.personalityRemark.label("personalityRemark"),
+            InterviewEvaluation.intensionRemark.label("intensionRemark"),
+            InterviewEvaluation.computerRemark.label("computerRemark"),
+            InterviewEvaluation.totalRemark.label("totalRemark"),
+            InterviewEvaluation.comment.label("comment"),
+            InterviewEvaluation.interviewResult.label("interviewResult"),
+            InterviewEvaluation.evaDate.label("evaDate"),
+            InterviewEvaluation.outstandingLevel.label("outstandingLevel"),
+
+            InterviewCommittee.prefix.label("cPrefix"),
+            InterviewCommittee.firstName.label("cFirstName"),
+            InterviewCommittee.lastName.label("cLastName"),
+
+            EducationDepartment.firstName.label("educationName")
             )
             .filter(InterviewEvaluation.applicantId == applicant_id)
             .outerjoin(InterviewCommittee, InterviewEvaluation.interviewComId == InterviewCommittee.interviewComId)
+            .outerjoin(EducationDepartment, InterviewEvaluation.educationId == EducationDepartment.educationId)
             .outerjoin(ApplicantGeneralInformation, InterviewEvaluation.applicantId == ApplicantGeneralInformation.applicantId)
-
         ).all()
 
     if not query:
@@ -506,6 +527,10 @@ def get_all_applicant_result_interview_eva_page(db: Session, applicant_id: str, 
             "totalRemark": row.totalRemark,
             "comment": row.comment,
             "interviewResult": row.interviewResult,
+            "educationId": row.educationId,
+            "evaDate": row.evaDate,
+            "educationName": row.educationName,
+            "outstandingLevel": row.outstandingLevel
         }
 
         response_list.append(EduInterviewEvaResponse(**response_data))
@@ -797,3 +822,281 @@ def get_applicant_information_problem(db: Session, app_id: str, admId):
         raise HTTPException(status_code=404, detail=f"Applicant with ID: {app_id} not found")
     
     return problems
+
+
+def create_interview_eva_final(db: Session, final_data: FinalInterviewResult):
+    adStatus = "07 - ผ่านการสอบสัมภาษณ์" if final_data.interviewResult == "pass" else "08 - ไม่ผ่านการสอบสัมภาษณ์"
+    intStatus = "04 - ผ่านการสัมภาษณ์" if final_data.interviewResult == "pass" else "05 - ไม่ผ่านการสัมภาษณ์"
+
+    new_eva = InterviewEvaluation(
+        applicantId=final_data.applicantId,
+        educationId=final_data.educationId,
+        comment=final_data.comment,
+        evaDate=final_data.evaDate
+    )
+    
+
+    applicant_status_updated = db.query(ApplicantStatus).filter(
+        ApplicantStatus.applicantId == final_data.applicantId
+    ).update(
+        {
+            ApplicantStatus.admissionStatus: adStatus,
+            ApplicantStatus.interviewStatus: intStatus
+        },
+        synchronize_session=False
+    )
+
+    db.add(new_eva)
+    db.commit()
+    db.refresh(new_eva)
+
+    return new_eva and applicant_status_updated
+
+
+def get_int_eva_edu_result(db: Session, app_id: str, edu_id: str):
+    query = (
+        db.query(
+            InterviewEvaluation.applicantId.label("applicantId"),
+            InterviewEvaluation.educationId.label("educationId"),
+            InterviewEvaluation.comment.label("comment"),
+            InterviewEvaluation.evaDate.label("evaDate"),
+            EducationDepartment.firstName.label("firstName")
+        )
+        .filter(InterviewEvaluation.applicantId == app_id, InterviewEvaluation.educationId == edu_id)
+        .outerjoin(EducationDepartment, InterviewEvaluation.educationId == EducationDepartment.educationId)
+    )
+
+    if not query:
+        return {"Message": "Applicant or Education not found"}
+
+    for row in query:
+        response_data = {
+            "applicantId": row.applicantId,
+            "educationId": row.educationId,
+            "comment": row.comment,
+            "evaDate": row.evaDate,
+            "firstName": row.firstName
+        }
+
+        InterviewEvaEduResult(**response_data).model_dump(exclude_unset=True)
+
+    return response_data
+
+
+
+def get_pre_eva_summary(db: Session):
+    query = (
+        db.query(
+            PreliminaryEvaluation.courseComId.label("courseComId"),
+            PreliminaryEvaluation.preliminaryEva.label("preliminaryEva"),
+            PreliminaryEvaluation.preliminaryComment.label("preliminaryComment"),
+            ApplicantGeneralInformation.applicantId.label("applicantId"),
+            ApplicantGeneralInformation.firstnameTH.label("firstnameTH"),
+            ApplicantGeneralInformation.lastnameTH.label("lastnameTH"),
+            ApplicantGeneralInformation.firstnameEN.label("firstnameEN"),
+            ApplicantGeneralInformation.lastnameEN.label("lastnameEN"),
+            ApplicantGeneralInformation.programRegistered.label("programRegistered"),
+            Admission.program.label("program"),
+            Admission.roundName.label("roundName"),
+            CourseCommittee.prefix.label("prefix"),
+            CourseCommittee.firstName.label("cFirstName"),
+            CourseCommittee.lastName.label("cLastName"),
+        )
+        .join(ApplicantGeneralInformation, PreliminaryEvaluation.applicantId == ApplicantGeneralInformation.applicantId)
+        .join(CourseCommittee, PreliminaryEvaluation.courseComId == CourseCommittee.courseComId)
+        .join(Admission, ApplicantGeneralInformation.programRegistered == Admission.admissionId)
+    ).all()
+
+    # Group by courseComId (committee)
+    grouped: Dict[str, Dict] = defaultdict(lambda: {
+        "courseComId": None,
+        "prefix": "",
+        "firstname": "",
+        "lastName": "",
+        "applicants": [],
+        "passed": 0,
+        "failed": 0,
+        "pending": 0
+    })
+
+    for row in query:
+        # Name fallback logic
+        firstname = row.firstnameTH if row.firstnameTH and row.firstnameTH.lower() != "string" else row.firstnameEN
+        lastname = row.lastnameTH if row.lastnameTH and row.lastnameTH.lower() != "string" else row.lastnameEN
+
+        # Prepare applicant data
+        applicant_data = {
+            "applicantId": row.applicantId,
+            "firstnameEN": firstname,
+            "lastnameEN": lastname,
+            "preliminaryEva": row.preliminaryEva,
+            "preliminaryComment": row.preliminaryComment,
+            "programRegistered": row.programRegistered,
+            "program": row.program,
+            "roundName": row.roundName,
+        }
+
+        group = grouped[row.courseComId]
+
+        # Only set committee info once
+        if group["courseComId"] is None:
+            group["courseComId"] = row.courseComId
+            group["prefix"] = row.prefix
+            group["firstName"] = row.cFirstName
+            group["lastName"] = row.cLastName
+
+        # Count passed/failed/pending
+        if row.preliminaryEva == "ผ่านการคัดกรอง":
+            group["passed"] += 1
+        elif row.preliminaryEva == "ไม่ผ่านการคัดกรอง":
+            group["failed"] += 1
+        else:
+            group["pending"] += 1
+
+        # Add applicant
+        group["applicants"].append(applicant_data)
+
+    # Convert to list
+    response_list = [
+        PreEvaSummaryResponse(
+            courseComId=data["courseComId"],
+            prefix=data["prefix"],
+            firstName=data["firstName"],
+            lastName=data["lastName"],
+            applicants=[
+                PreEvaSummaryApplicantsResponse(**applicant) for applicant in data["applicants"]
+            ],
+            passed=data["passed"],
+            failed=data["failed"],
+            pending=data["pending"]
+        )
+        for data in grouped.values()
+    ]
+
+    return PreEvaSummaryListResponse(preEva=response_list)
+
+
+def get_interview_summary(db: Session) -> IntEvaSummaryListResponse:
+    rooms = db.query(InterviewRoomDetails).all()
+    
+    response_list = []
+
+    for room in rooms:
+        # Find interview round
+        interview_round = db.query(InterviewRound).filter(InterviewRound.interviewRoundId == room.interviewRoundId).first()
+
+        # Find committees in the room
+        committees = (
+            db.query(InterviewCommittee)
+            .join(InterviewRoomCommittee, InterviewCommittee.interviewComId == InterviewRoomCommittee.interviewComId)
+            .filter(InterviewRoomCommittee.interviewRoomId == room.interviewRoomId)
+            .all()
+        )
+
+        committee_names = [f"อ. {c.firstName}" for c in committees]
+        combined_committee_name = ", ".join(committee_names)
+
+        # Find all applicants evaluated in the room
+        evaluations = (
+            db.query(InterviewEvaluation)
+            .filter(
+                InterviewEvaluation.interviewRoom == room.interviewRoom,
+                InterviewEvaluation.educationId == None
+            )
+            .all()
+        )
+
+        # Group evaluations by applicant
+        applicant_evaluations = {}
+        for eva in evaluations:
+            if eva.applicantId not in applicant_evaluations:
+                applicant_evaluations[eva.applicantId] = []
+            applicant_evaluations[eva.applicantId].append(eva)
+
+        applicants_list = []
+
+        for applicant_id, evals in applicant_evaluations.items():
+            # Average all scores
+            english_avg = sum([e.englishScore or 0 for e in evals]) / len(evals)
+            personality_avg = sum([e.personalityScore or 0 for e in evals]) / len(evals)
+            intention_avg = sum([e.intensionScore or 0 for e in evals]) / len(evals)
+            computer_avg = sum([e.computerScore or 0 for e in evals]) / len(evals)
+            total_avg = sum([e.totalScore or 0 for e in evals]) / len(evals)
+
+            # Get applicant info
+            applicant_info = db.query(ApplicantGeneralInformation).filter(ApplicantGeneralInformation.applicantId == applicant_id).first()
+
+            if applicant_info:
+                firstname = applicant_info.firstnameTH or applicant_info.firstnameEN or ""
+                lastname = applicant_info.lastnameTH or applicant_info.lastnameEN or ""
+            else:
+                firstname = ""
+                lastname = ""
+
+            # Get interview status
+            status = db.query(ApplicantStatus).filter(ApplicantStatus.applicantId == applicant_id).first()
+            interview_status = status.interviewStatus if status else None
+
+            # Pick interviewResult: most common one among evaluations
+            interview_results = [e.interviewResult for e in evals if e.interviewResult is not None]
+            interview_result = max(set(interview_results), key=interview_results.count) if interview_results else None
+
+            applicants_list.append(
+                IntEvaSummaryApplicantsResponse(
+                    applicantId=applicant_id,
+                    firstnameEN=firstname,
+                    lastnameEN=lastname,
+                    interviewRoom=room.interviewRoom,
+                    englishScore=round(english_avg, 2),
+                    personalityScore=round(personality_avg, 2),
+                    intentionScore=round(intention_avg, 2),
+                    computerScore=round(computer_avg, 2),
+                    totalScore=round(total_avg, 2),
+                    #InterviewCommitteeId=None,  # optional, can set if needed
+                    interviewResult=interview_result,
+                    interviewStatus=interview_status
+                )
+            )
+
+        response_list.append(
+            IntEvaSummaryResponse(
+                committee=combined_committee_name,
+                interviewRoom=room.interviewRoom,
+                admissionProgram=interview_round.admissionProgram if interview_round else None,
+                admissionRoundName=interview_round.admissionRoundName if interview_round else None,
+                applicants=applicants_list
+            )
+        )
+
+    return IntEvaSummaryListResponse(intEva=response_list)
+
+
+def get_all_int_slot(db: Session) -> list[AllIntEvaResponse]:
+    # Query only the needed fields and filter out None values
+    result = db.query(
+        InterviewEvaluation.interviewRoundId,
+        InterviewEvaluation.interviewRoom,
+        InterviewEvaluation.interviewTime
+    ).filter(
+        InterviewEvaluation.educationId == None,
+        InterviewEvaluation.interviewRoundId != None,
+        InterviewEvaluation.interviewRoom != None,
+        InterviewEvaluation.interviewTime != None,
+    ).all()
+
+    # Group by (interviewRoundId, interviewRoom)
+    grouped = defaultdict(set)
+    for round_id, room, time in result:
+        grouped[(round_id, room)].add(time)
+
+    # Convert to list of schema objects
+    response = [
+        AllIntEvaResponse(
+            interviewRoundId=round_id,
+            interviewRoom=room,
+            interviewTime=sorted(list(times))  # sort optional
+        )
+        for (round_id, room), times in grouped.items()
+    ]
+
+    return response

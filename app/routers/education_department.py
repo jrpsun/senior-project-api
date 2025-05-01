@@ -189,3 +189,46 @@ def created_or_updated_applicant_problem_status(
 @router.get("/get-applicant-problem/{applicant_id}/{admId}", response_model=ApplicantInformationProblem)
 def get_applicant_problem(applicant_id: str, admId: str, db: Session = Depends(get_db)):
     return crud.get_applicant_information_problem(db, applicant_id, admId)
+
+
+@router.post("/create-int-eva-final")
+def create_interview_eva_final(final_data: FinalInterviewResult, db: Session =  Depends(get_db)):
+    created = crud.create_interview_eva_final(db, final_data)
+
+    if not created:
+        raise HTTPException(status_code=404, detail=f"Not found applicant id {final_data.app_id} or education department id {final_data.educationId}")
+    
+    return {"message": "Preliminary evaluation created successfully"}
+
+
+@router.get("/get-int-eva-edu-result/{app_id}/{edu_id}")
+def get_int_eva_edu_result(app_id: str, edu_id: str, db: Session = Depends(get_db)):
+    get_int_eva_edu_result = crud.get_int_eva_edu_result(db, app_id, edu_id)
+    if not get_int_eva_edu_result:
+        raise HTTPException(status_code=404, detail="Not found Interview Evaluation for applicant id {app_id}")
+    return get_int_eva_edu_result
+
+
+@router.get("/get-pre-eva-sum", response_model=PreEvaSummaryListResponse)
+def get_pre_eva_sum(db: Session = Depends(get_db)):
+    get_pre_eva_sum = crud.get_pre_eva_summary(db)
+    if not get_pre_eva_sum:
+        raise HTTPException(status_code=404, detail="Not found Data")
+    return get_pre_eva_sum
+
+
+@router.get("/get-int-eva-sum", response_model=IntEvaSummaryListResponse)
+def get_interview_summary(db: Session = Depends(get_db)):
+    get_interview_summary = crud.get_interview_summary(db)
+    if not get_interview_summary:
+        raise HTTPException(status_code=404, detail="Not found Data")
+    return get_interview_summary
+
+
+@router.get("/get-all-int-slot", response_model=list[AllIntEvaResponse])
+def get_all_int_slot(db: Session = Depends(get_db)):
+    get_all_int_slot = crud.get_all_int_slot(db)
+    if not get_all_int_slot:
+        raise HTTPException(status_code=404, detail="Not found Data")
+    return get_all_int_slot
+    

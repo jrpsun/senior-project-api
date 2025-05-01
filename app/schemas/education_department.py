@@ -137,6 +137,10 @@ class EduInterviewEvaResponse(BaseModel):
     totalRemark: Optional[str] = None
     comment: Optional[str] = None
     interviewResult: Optional[str] = None
+    educationId: Optional[str] = None
+    evaDate: Optional[str] = None
+    educationName: Optional[str] = None
+    outstandingLevel: Optional[str] = None
 
 
 class EduInterviewEvaListResponse(BaseModel):
@@ -311,7 +315,7 @@ class PreEvaUpdateApplicantModel(BaseModel):
     com_id: str
 
 
-class EduInterviewEvaResponse(BaseModel):
+class TESTEduInterviewEvaResponse(BaseModel):
     applicantId: Optional[str] = None
     firstnameEN: Optional[str] = None
     lastnameEN: Optional[str] = None
@@ -336,8 +340,8 @@ class EduInterviewEvaResponse(BaseModel):
     interviewResult: Optional[str] = None
 
 
-class EduInterviewEvaListResponse(BaseModel):
-    applicants: list[EduInterviewEvaResponse]
+class TESTEduInterviewEvaListResponse(BaseModel):
+    applicants: list[TESTEduInterviewEvaResponse]
 
 
 class InterviewRoundResponse(BaseModel):
@@ -448,3 +452,77 @@ class ApplicantInformationProblem(BaseModel):
     applicantId: Optional[str] = None
     details: Optional[str] = None
     updateDate: Optional[str] = None
+
+
+class FinalInterviewResult(BaseModel):
+    applicantId: Optional[str] = None
+    educationId: Optional[str] = None
+    interviewResult: Optional[str] = None
+    comment: Optional[str] = None
+    evaDate: Optional[str] = None
+
+
+class InterviewEvaEduResult(BaseModel):
+    applicantId: Optional[str] = None
+    educationId: Optional[str] = None
+    comment: Optional[str] = None
+    evaDate: Optional[str] = None
+    firstName: Optional[str] = None
+
+
+class PreEvaSummaryApplicantsResponse(BaseModel):
+    applicantId: Optional[str] = None
+    firstnameEN: Optional[str] = None
+    lastnameEN: Optional[str] = None
+    preliminaryEva: Optional[str] = None
+    preliminaryComment: Optional[str] = None
+    programRegistered: Optional[str] = None
+    program: Optional[str] = None
+    roundName: Optional[str] = None
+
+
+class PreEvaSummaryResponse(BaseModel):
+    courseComId: Optional[str] = None
+    prefix: Optional[str] = None
+    firstName: Optional[str] = None
+    lastName: Optional[str] = None
+    applicants: list[PreEvaSummaryApplicantsResponse] = []
+    passed: Optional[int] = None
+    failed: Optional[int] = None
+    pending: Optional[int] = None
+
+
+class PreEvaSummaryListResponse(BaseModel):
+    preEva: list[PreEvaSummaryResponse]
+
+
+class IntEvaSummaryApplicantsResponse(BaseModel):
+    applicantId: Optional[str] = None
+    firstnameEN: Optional[str] = None 
+    lastnameEN: Optional[str] = None 
+    interviewRoom: Optional[str] = None
+    englishScore: Optional[float] = None
+    personalityScore: Optional[float] = None
+    intentionScore: Optional[float] = None
+    computerScore: Optional[float] = None
+    totalScore: Optional[float] = None 
+    interviewResult: Optional[str] = None
+    interviewStatus: Optional[str] = None
+
+
+class IntEvaSummaryResponse(BaseModel):
+    committee: Optional[str] = None
+    interviewRoom: Optional[str] = None
+    admissionProgram: Optional[str] = None
+    admissionRoundName: Optional[str] = None
+    applicants: list[IntEvaSummaryApplicantsResponse] = []
+
+
+class IntEvaSummaryListResponse(BaseModel):
+    intEva: list[IntEvaSummaryResponse]
+
+
+class AllIntEvaResponse(BaseModel):
+    interviewRoundId: Optional[str] = None
+    interviewRoom: Optional[str] = None
+    interviewTime: list[str]

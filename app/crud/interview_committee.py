@@ -251,7 +251,6 @@ def update_interview_eva_to_applicant(db: Session, app_id: str, com_id: str, inE
         "outstandingLevel": inEva_data.outstandingLevel
     }
 
-    # Only include interviewResult if it is provided
     if inEva_data.interviewResult is not None:
         update_data["interviewResult"] = inEva_data.interviewResult
 
@@ -260,51 +259,61 @@ def update_interview_eva_to_applicant(db: Session, app_id: str, com_id: str, inE
         InterviewEvaluation.interviewComId == com_id
     ).update(update_data, synchronize_session=False)
 
-    # Fetch all evaluations again
+    # Get all evaluations
     evaluations = db.query(InterviewEvaluation).filter(
-        InterviewEvaluation.applicantId == app_id
+        InterviewEvaluation.applicantId == app_id,
+        InterviewEvaluation.educationId == None
     ).all()
 
-    results = [eva.interviewResult for eva in evaluations]
-    results = [res for res in results if res is not None]
 
-    if len(results) == 2:
-        if all(res == "ผ่านการสัมภาษณ์" for res in results):
+    results = [eva.interviewResult for eva in evaluations]
+
+    # Separate logic-friendly sets
+    all_results_set = set(results)
+    non_null_results = [r for r in results if r is not None]
+    unique_non_null_set = set(non_null_results)
+
+    # Priority-based decision tree
+    if "ไม่มาสัมภาษณ์" in all_results_set:
+        interviewStatus = "02 - ไม่มาสัมภาษณ์"
+        admissionStatus = "08 - ไม่ผ่านการสอบสัมภาษณ์"
+
+    elif "รอพิจารณาเพิ่มเติม" in all_results_set:
+        interviewStatus = "03 - รอพิจารณาเพิ่มเติม"
+        admissionStatus = "06 - รอสัมภาษณ์"
+
+    elif len(non_null_results) < len(results):
+        interviewStatus = "06 - รอผลการประเมิน"
+        admissionStatus = "06 - รอสัมภาษณ์"
+
+    else:
+        if unique_non_null_set == {"ผ่านการสัมภาษณ์"}:
             interviewStatus = "04 - ผ่านการสัมภาษณ์"
-        elif all(res == "ไม่ผ่านการสัมภาษณ์" for res in results):
+            admissionStatus = "07 - ผ่านการสอบสัมภาษณ์"
+        elif unique_non_null_set == {"ไม่ผ่านการสัมภาษณ์"}:
             interviewStatus = "05 - ไม่ผ่านการสัมภาษณ์"
-        elif set(results) == {"ผ่านการสัมภาษณ์", "ไม่ผ่านการสัมภาษณ์"}:
+            admissionStatus = "08 - ไม่ผ่านการสอบสัมภาษณ์"
+        elif unique_non_null_set == {"ผ่านการสัมภาษณ์", "ไม่ผ่านการสัมภาษณ์"}:
             interviewStatus = "03 - รอพิจารณาเพิ่มเติม"
+            admissionStatus = "06 - รอสัมภาษณ์"
         else:
             interviewStatus = "02 - ไม่มาสัมภาษณ์"
-    elif len(results) == 1:
-        interviewStatus = "06 - รอผลการประเมินเพิ่มเติม"
-    else:
-        interviewStatus = "02 - ไม่มาสัมภาษณ์"
+            admissionStatus = "08 - ไม่ผ่านการสอบสัมภาษณ์"
+
+    # Save statuses
+    db.query(ApplicantStatus).filter(
+        ApplicantStatus.applicantId == app_id
+    ).update({"interviewStatus": interviewStatus}, synchronize_session=False)
 
     db.query(ApplicantStatus).filter(
         ApplicantStatus.applicantId == app_id
-    ).update(
-        {"interviewStatus": interviewStatus}, synchronize_session=False
-    )
-
-    if interviewStatus == "04 - ผ่านการสัมภาษณ์":
-        admissionStatus = "07 - ผ่านการสัมภาษณ์"
-    elif interviewStatus == "05 - ไม่ผ่านการสัมภาษณ์":
-        admissionStatus = "08 - ไม่ผ่านการสัมภาษณ์"
-    elif interviewStatus in ["03 - รอพิจารณาเพิ่มเติม", "06 - รอผลการประเมินเพิ่มเติม"]:
-        admissionStatus = "06 - รอสัมภาษณ์"    
-    else:
-        admissionStatus = "08 - ไม่ผ่านการสัมภาษณ์"
-
-    db.query(ApplicantStatus).filter(
-        ApplicantStatus.applicantId == app_id
-    ).update(
-        {"admissionStatus": admissionStatus}, synchronize_session=False
-    )
+    ).update({"admissionStatus": admissionStatus}, synchronize_session=False)
 
     db.commit()
     return True
+
+
+
 
 
 
@@ -449,3 +458,4 @@ def update_interview_room_auto_group(db: Session, update_data: EditInterviewRoom
     db.commit()
 
     return db.query(InterviewEvaluation).filter(InterviewEvaluation.applicantId == update_data.applicantId).all()
+

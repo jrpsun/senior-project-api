@@ -1,17 +1,20 @@
 from sqlalchemy.orm import Session
 from app.models.public_relations import PublicRelations
 from app.schemas.public_relations import PublicRelationsCreate, PublicRelationsUpdate
+from datetime import datetime
 
 # 🔹 Create (เพิ่ม Public Relations)
 def create_public_relation(db: Session, pr_data: PublicRelationsCreate):
     new_pr = PublicRelations(
         PRid=pr_data.PRid,
+        prefix=pr_data.prefix,
         firstName=pr_data.firstName,
         lastName=pr_data.lastName,
         username=pr_data.username,
         password=pr_data.password,
         email=pr_data.email,
-        phoneNumber=pr_data.phoneNumber
+        phoneNumber=pr_data.phoneNumber,
+        lastSeen=datetime.now().strftime("%d-%m-%Y %H.%M")
     )
     db.add(new_pr)
     db.commit()
