@@ -9,10 +9,59 @@ from datetime import timedelta
 from fastapi import Response
 
 
+# def create_applicant(db: Session, applicant_data: ApplicantCreate):
+#     new_applicant_id = generate_next_id(db)
+
+#     new_applicant_general = ApplicantGeneralInformation(
+#         applicantId=new_applicant_id,
+#         nationality=applicant_data.nationality,
+#         idCardNumber=applicant_data.idNumber if applicant_data.idType == "citizen" else "",
+#         passportId=applicant_data.idNumber if applicant_data.idType == "passport" else "",
+#         prefix=applicant_data.title,
+#         firstnameTH=applicant_data.firstNameThai,
+#         lastnameTH=applicant_data.lastNameThai,
+#         firstnameEN=applicant_data.firstNameEnglish,
+#         lastnameEN=applicant_data.lastNameEnglish,
+#         password=hash_password(applicant_data.password),
+#     )
+
+#     new_contact = ApplicantContact(
+#         applicantId=new_applicant_id,
+#         applicantEmail=applicant_data.email,
+#     )
+
+#     applicant_models = [
+#         ApplicantAddress,
+#         ApplicantContactPerson,
+#         ApplicantAdmissionChannel,
+#         ApplicantEnglishExam,
+#         ApplicantAcademicBackground,
+#         ApplicantMathematicsExam,
+#         ApplicantAdditionalDocuments,
+#         ApplicantStatus,
+#         PreliminaryEvaluation
+#     ]
+
+#     new_records = [model(applicantId=new_applicant_id) for model in applicant_models]
+    
+#     db.add(new_applicant_general)
+#     db.commit()
+
+#     db.add(new_contact)
+#     db.add_all(new_records)
+#     db.commit()
+
+#     db.refresh(new_applicant_general)
+#     db.refresh(new_contact)
+#     for record in new_records:
+#         db.refresh(record)
+
+#     return {"Message": f"Create Applicant id {new_applicant_id} Success."}
+
 def create_applicant(db: Session, applicant_data: ApplicantCreate):
     new_applicant_id = generate_next_id(db)
 
-    new_applicant_general = ApplicantGeneralInformation(
+    new_applicant = ApplicantRegistrations(
         applicantId=new_applicant_id,
         nationality=applicant_data.nationality,
         idCardNumber=applicant_data.idNumber if applicant_data.idType == "citizen" else "",
@@ -22,46 +71,20 @@ def create_applicant(db: Session, applicant_data: ApplicantCreate):
         lastnameTH=applicant_data.lastNameThai,
         firstnameEN=applicant_data.firstNameEnglish,
         lastnameEN=applicant_data.lastNameEnglish,
-        submissionStatus=False,
         password=hash_password(applicant_data.password),
+        applicantEmail=applicant_data.email
     )
 
-    new_contact = ApplicantContact(
-        applicantId=new_applicant_id,
-        applicantEmail=applicant_data.email,
-    )
-
-    applicant_models = [
-        ApplicantAddress,
-        ApplicantContactPerson,
-        ApplicantAdmissionChannel,
-        ApplicantEnglishExam,
-        ApplicantAcademicBackground,
-        ApplicantMathematicsExam,
-        ApplicantAdditionalDocuments,
-        ApplicantStatus,
-        PreliminaryEvaluation
-    ]
-
-    new_records = [model(applicantId=new_applicant_id) for model in applicant_models]
-    
-    db.add(new_applicant_general)
+    db.add(new_applicant)
     db.commit()
+    db.refresh(new_applicant)
 
-    db.add(new_contact)
-    db.add_all(new_records)
-    db.commit()
+    return new_applicant
 
-    db.refresh(new_applicant_general)
-    db.refresh(new_contact)
-    for record in new_records:
-        db.refresh(record)
-
-    return {"Message": f"Create Applicant id {new_applicant_id} Success."}
 
 
 def generate_next_id(db: Session) -> str:
-    last_user = db.query(ApplicantGeneralInformation).order_by(ApplicantGeneralInformation.applicantId.desc()).first()
+    last_user = db.query(ApplicantRegistrations).order_by(ApplicantRegistrations.applicantId.desc()).first()
     if not last_user:
         return "0000001"
     last_id = int(last_user.applicantId)
@@ -71,9 +94,9 @@ def generate_next_id(db: Session) -> str:
 
 
 def applicant_login(response: Response, db: Session, idNumber: str, password: str):
-    user: Optional[ApplicantGeneralInformation] = db.query(ApplicantGeneralInformation).filter(
-        (ApplicantGeneralInformation.idCardNumber == idNumber) |
-        (ApplicantGeneralInformation.passportId == idNumber)
+    user: Optional[ApplicantRegistrations] = db.query(ApplicantRegistrations).filter(
+        (ApplicantRegistrations.idCardNumber == idNumber) |
+        (ApplicantRegistrations.passportId == idNumber)
     ).first()
 
     if not user or not verify_password(password, user.password):

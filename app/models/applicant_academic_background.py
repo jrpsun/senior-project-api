@@ -1,13 +1,15 @@
-from sqlalchemy import Column, String, ForeignKey, Float
+from sqlalchemy import Column, String, ForeignKey
 from app.db import Base
 from sqlalchemy.dialects.mysql import LONGTEXT
-from app.models.applicant_general_information import ApplicantGeneralInformation
+from app.models.admission import Admission
+from app.models.applicant_registrations import ApplicantRegistrations
 
 
 class ApplicantAcademicBackground(Base):
     __tablename__ = 'Applicant_Academic_Background'
 
-    applicantId = Column(String(50), ForeignKey('Applicant_General_Information.applicantId'), primary_key=True)
+    applicantId = Column(String(50), ForeignKey('ApplicantRegistrations.applicantId'), primary_key=True)
+    programRegistered = Column(String(50), ForeignKey('Admission.admissionId'), primary_key=True)
     academicType = Column(String(50), nullable=True)
     customAcademicType = Column(String(50), nullable=True)
     currentStatus = Column(String(50), nullable=True)

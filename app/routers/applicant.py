@@ -9,52 +9,39 @@ from app.services.auth import get_current_user, perform_refresh_token
 router = APIRouter()
 
 
-@router.put("/general/{applicant_id}")
-def update_applicant_general_info(applicant_id: str, update_data: ApplicantGeneralInformationUpdate, db: Session = Depends(get_db)):
-    updated_applicant_general = crud.update_applicant_general_info(db, applicant_id, update_data)
-    if not updated_applicant_general:
-        raise HTTPException(status_code=404, detail="Applicant not found")
-    return updated_applicant_general
+@router.get("/registrations/{applicantId}", response_model=ApplicantRegistrationsResponse)
+def get_applicant_registrations_info(applicantId: str, db: Session = Depends(get_db)):
+    return crud.get_applicant_info_registrations(db, applicantId)
 
 
-@router.get("/general/{applicant_id}", response_model=ApplicantGeneralInformationResponse)
-def get_applicant_general_info(applicant_id: str, db: Session = Depends(get_db)):
-    applicant = crud.get_applicant_general_info(db, applicant_id)
-    if not applicant:
-        raise HTTPException(status_code=404, detail="Applicant not found")
-    return applicant
+@router.put("/general/{applicant_id}/{admissionId}")
+def update_applicant_general_info(applicant_id: str, admissionId: str, update_data: ApplicantGeneralInformationUpdate, db: Session = Depends(get_db)):
+    return crud.update_applicant_general_info(db, applicant_id, admissionId, update_data)
 
 
-@router.put("/education/{applicant_id}")
-def update_applicant_education_info(applicant_id: str, update_data: ApplicantEducationinfoUpdate, db: Session = Depends(get_db)):
-    updated_applicant_education = crud.update_applicant_education_info(db, applicant_id, update_data)
-    if not updated_applicant_education:
-        raise HTTPException(status_code=404, detail="Applicant not found")
-    return updated_applicant_education
+@router.get("/general/{applicant_id}/{admissionId}", response_model=ApplicantGeneralInformationResponse)
+def get_applicant_general_info(applicant_id: str, admissionId: str, db: Session = Depends(get_db)):
+    return crud.get_applicant_general_info(db, applicant_id, admissionId)
 
 
-@router.get("/education/{applicant_id}", response_model=ApplicantEducationInfoResponse)
-def get_applicant_education_info(applicant_id: str, db: Session = Depends(get_db)):
-    applicant = crud.get_applicant_education_info(db, applicant_id)
-    if not applicant:
-        raise HTTPException(status_code=404, detail="Applicant not found")
-    return applicant
+@router.put("/education/{applicant_id}/{admId}")
+def update_applicant_education_info(applicant_id: str, admId: str, update_data: ApplicantEducationinfoUpdate, db: Session = Depends(get_db)):
+    return crud.update_applicant_education_info(db, applicant_id, admId, update_data)
+
+
+@router.get("/education/{applicant_id}/{admId}", response_model=ApplicantEducationInfoResponse)
+def get_applicant_education_info(applicant_id: str, admId: str, db: Session = Depends(get_db)):
+    return crud.get_applicant_education_info(db, applicant_id, admId)
 
 
 @router.put("/reward")
 def create_applicant_reward(update_data: list[ApplicantRewardResponse], db: Session = Depends(get_db)):
-    new_applicant_reward = crud.process_applicant_rewards(db, update_data)
-    if not new_applicant_reward:
-        raise HTTPException(status_code=404, detail="Create Applicant Reward Failed")
-    return new_applicant_reward
+    return crud.process_applicant_rewards(db, update_data)
 
 
-@router.get("/reward/{applicant_id}", response_model=list[ApplicantRewardResponse])
-def get_rewards_by_appId(applicant_id: str, db: Session = Depends(get_db)):
-    rewards = crud.get_rewards_by_applicant_id(db, applicant_id)
-    if not rewards:
-        return []
-    return rewards
+@router.get("/reward/{applicant_id}/{admId}", response_model=list[ApplicantRewardResponse])
+def get_rewards_by_appId(applicant_id: str, admId: str, db: Session = Depends(get_db)):
+    return crud.get_rewards_by_applicant_id(db, applicant_id, admId)
 
 
 @router.delete("/reward/{reward_id}")
@@ -67,18 +54,12 @@ def delete_reward_by_id(reward_id: str, db: Session = Depends(get_db)):
 
 @router.put("/talent")
 def created_or_updated_talent(updated_data: list[ApplicantTalentResponse], db: Session = Depends(get_db)):
-    applicant_talent = crud.process_applicant_talents(db, updated_data)
-    if not applicant_talent:
-        raise HTTPException(status_code=404, detail="Created or Updated Applicant Talent Failed")
-    return applicant_talent
+    return crud.process_applicant_talents(db, updated_data)
 
 
-@router.get("/talent/{applicant_id}", response_model=list[ApplicantTalentResponse])
-def get_talents_by_appId(applicant_id: str, db: Session = Depends(get_db)):
-    talents = crud.get_talents_by_applicant_id(db, applicant_id)
-    if not talents:
-        return []
-    return talents
+@router.get("/talent/{applicant_id}/{admId}", response_model=list[ApplicantTalentResponse])
+def get_talents_by_appId(applicant_id: str, admId: str, db: Session = Depends(get_db)):
+    return crud.get_talents_by_applicant_id(db, applicant_id, admId)
 
 
 @router.delete("/talent/{talent_id}")
@@ -91,18 +72,12 @@ def delete_talent_by_id(talent_id: str, db: Session = Depends(get_db)):
 
 @router.put("/training")
 def created_or_updated_training(updated_data: list[ApplicantTrainingResponse], db: Session = Depends(get_db)):
-    applicant_training = crud.process_applicant_trainings(db, updated_data)
-    if not applicant_training:
-        raise HTTPException(status_code=404, detail="Created or Updated Applicant Training Failed")
-    return applicant_training
+    return crud.process_applicant_trainings(db, updated_data)
 
 
-@router.get("/training/{applicant_id}", response_model=list[ApplicantTrainingResponse])
-def get_trining_by_appId(applicant_id: str, db: Session = Depends(get_db)):
-    trains = crud.get_trains_by_applicant_id(db, applicant_id)
-    if not trains:
-        return []
-    return trains
+@router.get("/training/{applicant_id}/{admId}", response_model=list[ApplicantTrainingResponse])
+def get_trining_by_appId(applicant_id: str, admId: str, db: Session = Depends(get_db)):
+    return crud.get_trains_by_applicant_id(db, applicant_id, admId)
 
 
 @router.delete("/training/{training_id}")
@@ -114,28 +89,19 @@ def delete_training_by_id(training_id: str, db: Session = Depends(get_db)):
 
 
 # Document
-@router.put("/document/{applicant_id}")
-def updated_applicant_document(applicant_id: str, updated_data: ApplicantDocumentsResponse, db: Session = Depends(get_db)):
-    document = crud.updated_applicant_document(db, applicant_id, updated_data)
-    if not document:
-        raise HTTPException(status_code=404, detail=f"Updated Applicant Document with ID: {applicant_id} Failed")
-    return document
+@router.put("/document/{applicant_id}/{admId}")
+def updated_applicant_document(applicant_id: str, admId: str, updated_data: ApplicantDocumentsResponse, db: Session = Depends(get_db)):
+    return crud.updated_applicant_document(db, applicant_id, admId, updated_data)
 
 
-@router.get("/document/{applicant_id}", response_model=ApplicantDocumentsResponse)
-def get_applicant_document_by_id(applicant_id: str, db: Session = Depends(get_db)):
-    document = crud.get_applicant_document(db, applicant_id)
-    if not document:
-        raise HTTPException(status_code=404, detail=f"Get Applicant Document with ID: {applicant_id} Failed")
-    return document
+@router.get("/document/{applicant_id}/{admId}", response_model=ApplicantDocumentsResponse)
+def get_applicant_document_by_id(applicant_id: str, admId: str, db: Session = Depends(get_db)):
+    return crud.get_applicant_document(db, applicant_id, admId)
 
 
-@router.put("/submit/{applicant_id}")
-def updated_applicant_status(applicant_id: str, db: Session = Depends(get_db)):
-    applicant = crud.updated_applicant_status(db, applicant_id)
-    if not applicant:
-        raise HTTPException(status_code=404, detail=f"Updated Applicant Status with ID: {applicant_id} Failed")
-    return applicant
+@router.put("/submit/{applicant_id}/{admId}")
+def updated_applicant_status(applicant_id: str, admId: str, db: Session = Depends(get_db)):
+    return crud.updated_applicant_status(db, applicant_id, admId)
 
 
 @router.post("/refresh-token")
@@ -144,25 +110,23 @@ def refresh_token(request: Request, response: Response, db: Session = Depends(ge
 
 
 @router.get("/get-admission-id/{appId}")
-def get_admission_id(appId: str, db: Session = Depends(get_db), current_user: ApplicantGeneralInformation = Depends(get_current_user)):
+def get_admission_id(appId: str, db: Session = Depends(get_db)):
     return crud.get_admission_id_by_app_id(db, appId)
 
 
 @router.post("/updated-admission-id/{appId}/{admissionId}")
-def updated_admission_id(
+def registration_applicant(
     appId: str,
     admissionId: str,
-    db: Session = Depends(get_db),
-    current_user: ApplicantGeneralInformation = Depends(get_current_user)
+    db: Session = Depends(get_db)
 ):
-    return crud.updated_admission_id(db, appId, admissionId)
+    return crud.registration_applicant_to_admission(db, appId, admissionId)
 
 
 @router.get("/get-applicant-profile/{appId}")
 def get_applicant_edit_info(
     appId: str,
-    db: Session = Depends(get_db),
-    current_user: ApplicantGeneralInformation = Depends(get_current_user)
+    db: Session = Depends(get_db)
 ):
     return crud.get_applicant_edited_profile(db, appId)
 
@@ -171,8 +135,7 @@ def get_applicant_edit_info(
 def edit_applicant_edit_info(
     appId: str,
     data: ApplicantEditProfile,
-    db: Session = Depends(get_db),
-    current_user: ApplicantGeneralInformation = Depends(get_current_user)
+    db: Session = Depends(get_db)
 ):
     return crud.updated_applicant_profile(db, appId, data)
 

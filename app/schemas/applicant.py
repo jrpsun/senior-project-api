@@ -27,14 +27,14 @@ class ApplicantEditProfile(BaseModel):
 
 class ApplicantGeneralInformationUpdate(BaseModel):
     # GeneralInformation
-    nationality: Optional[str] = None
-    idCardNumber: Optional[str] = None
-    passportId: Optional[str] = None
-    prefix: Optional[str] = None
-    firstnameTH: Optional[str] = None
-    lastnameTH: Optional[str] = None
-    firstnameEN: Optional[str] = None
-    lastnameEN: Optional[str] = None
+    #nationality: Optional[str] = None
+    #idCardNumber: Optional[str] = None
+    #passportId: Optional[str] = None
+    #prefix: Optional[str] = None
+    #firstnameTH: Optional[str] = None
+    #lastnameTH: Optional[str] = None
+    #firstnameEN: Optional[str] = None
+    #lastnameEN: Optional[str] = None
     idCardExpDate: Optional[str] = None
     passportExpDate: Optional[str] = None
     gender: Optional[str] = None
@@ -56,7 +56,7 @@ class ApplicantGeneralInformationUpdate(BaseModel):
     docCopyHouseRegisSize: Optional[str] = None
     # ContactApplicant
     applicantPhone: Optional[str] = None
-    applicantEmail: Optional[str] = None
+    #applicantEmail: Optional[str] = None
     line: Optional[str] = None
     facebook: Optional[str] = None
     instagram: Optional[str] = None
@@ -300,6 +300,7 @@ class ApplicantEducationInfoResponse(BaseModel):
 class ApplicantRewardResponse(BaseModel):
     rewardId: Optional[str] = None
     applicantId: Optional[str] = None
+    programRegistered: Optional[str] = None
     nameOfCompetition: Optional[str] = None
     rewardYear: Optional[str] = None
     rewardLevel: Optional[str] = None
@@ -314,6 +315,7 @@ class ApplicantRewardResponse(BaseModel):
 class ApplicantTalentResponse(BaseModel):
     talentId: Optional[str] = None
     applicantId: Optional[str] = None
+    programRegistered: Optional[str] = None
     kindOfTalent: Optional[str] = None
     nameOfCompetition: Optional[str] = None
     talentYear: Optional[str] = None
@@ -329,6 +331,7 @@ class ApplicantTalentResponse(BaseModel):
 class ApplicantTrainingResponse(BaseModel):
     trainingId: Optional[str] = None
     applicantId: Optional[str] = None
+    programRegistered: Optional[str] = None
     nameOfCourse: Optional[str] = None
     institution: Optional[str] = None
     trainingYear: Optional[str] = None
@@ -354,3 +357,18 @@ class ApplicantDocumentsResponse(BaseModel):
     additional: Optional[str] = None
     additionalName: Optional[str] = None
     additionalSize: Optional[str] = None
+
+
+class ApplicantRegistrationsResponse(BaseModel):
+    idCardNumber: Optional[str] = None
+    passportId: Optional[str] = None
+    applicantEmail: str
+    prefix: str
+    firstnameTH: Optional[str] = None
+    firstnameEN: str
+    lastnameTH: Optional[str] = None
+    lastnameEN: str
+    nationality: str
+
+    class Config:
+        from_attributes = True

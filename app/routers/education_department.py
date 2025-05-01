@@ -42,7 +42,7 @@ def delete_edu_dep(edu_id: str, db: Session = Depends(get_db)):
     return {"message": "Education Department deleted successfully"}
 
 
-@router.get("/all-applicant-edu", response_model=EduListApplicantDataMainPageResponse)
+@router.get("/all-applicant-edu") #, response_model=EduListApplicantDataMainPageResponse)
 def read_all_applicants(db: Session = Depends(get_db)):
     read_all_applicants = crud.get_all_applicants_edu_main_page(db)
     if not read_all_applicants:
@@ -50,9 +50,9 @@ def read_all_applicants(db: Session = Depends(get_db)):
     return read_all_applicants
 
 
-@router.get("/applicant-edu/{app_id}", response_model=EduApplicantDataViewResponse)
-def get_applicant(app_id: str, db: Session = Depends(get_db)):
-    applicant = crud.get_applicant_edu_main_page_by_id(app_id, db)
+@router.get("/applicant-edu/{app_id}/{admId}", response_model=EduApplicantDataViewResponse)
+def get_applicant(app_id: str, admId: str, db: Session = Depends(get_db)):
+    applicant = crud.get_applicant_edu_main_page_by_id(app_id, admId, db)
     if not applicant:
         raise HTTPException(status_code=404, detail=f"Applicant Information with id {app_id} not found")
     return applicant
@@ -173,21 +173,19 @@ def get_all_rooms_api(db: Session = Depends(get_db)):
     return rooms
 
 
-@router.put("/update-applicant-status/{applicant_id}/{education_id}")
+@router.put("/update-applicant-status/{applicant_id}/{education_id}/{admId}")
 def created_or_updated_applicant_problem_status(
     applicant_id: str,
     education_id: str,
+    admId: str,
     data: str = Body(...),
     db: Session = Depends(get_db)
 ):
-    problem = crud.create_or_updated_applicant_problem(db, applicant_id, education_id, data)
+    problem = crud.create_or_updated_applicant_problem(db, applicant_id, education_id, admId, data)
 
     return problem
 
 
-@router.get("/get-applicant-problem/{applicant_id}", response_model=ApplicantInformationProblem)
-def get_applicant_problem(applicant_id: str, db: Session = Depends(get_db)):
-    applicant_problem = crud.get_applicant_information_problem(db, applicant_id)
-    if not applicant_problem:
-        raise HTTPException(status_code=404, detail="Applicant problem not found")
-    return applicant_problem
+@router.get("/get-applicant-problem/{applicant_id}/{admId}", response_model=ApplicantInformationProblem)
+def get_applicant_problem(applicant_id: str, admId: str, db: Session = Depends(get_db)):
+    return crud.get_applicant_information_problem(db, applicant_id, admId)
