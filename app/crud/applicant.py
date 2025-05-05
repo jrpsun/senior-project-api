@@ -1,4 +1,5 @@
 import uuid
+from sqlalchemy import and_
 from sqlalchemy.orm import Session
 from fastapi import HTTPException
 from app.models import *
@@ -63,10 +64,34 @@ def get_applicant_general_info(db: Session, applicant_id: str, admissionId: str)
             ApplicantContactPerson,
             ApplicantAdmissionChannel,
         )
-        .outerjoin(ApplicantContact, ApplicantGeneralInformation.applicantId == ApplicantContact.applicantId)
-        .outerjoin(ApplicantAddress, ApplicantGeneralInformation.applicantId == ApplicantAddress.applicantId)
-        .outerjoin(ApplicantContactPerson, ApplicantGeneralInformation.applicantId == ApplicantContactPerson.applicantId)
-        .outerjoin(ApplicantAdmissionChannel, ApplicantGeneralInformation.applicantId == ApplicantAdmissionChannel.applicantId)
+        .outerjoin(
+            ApplicantContact,
+            and_(
+                ApplicantGeneralInformation.applicantId == ApplicantContact.applicantId,
+                ApplicantGeneralInformation.programRegistered == ApplicantContact.programRegistered
+            )
+        )
+        .outerjoin(
+            ApplicantAddress,
+            and_(
+                ApplicantGeneralInformation.applicantId == ApplicantAddress.applicantId,
+                ApplicantGeneralInformation.programRegistered == ApplicantAddress.programRegistered
+            )
+        )
+        .outerjoin(
+            ApplicantContactPerson,
+            and_(
+                ApplicantGeneralInformation.applicantId == ApplicantContactPerson.applicantId,
+                ApplicantGeneralInformation.programRegistered == ApplicantContactPerson.programRegistered
+            )
+        )
+        .outerjoin(
+            ApplicantAdmissionChannel,
+            and_(
+                ApplicantGeneralInformation.applicantId == ApplicantAdmissionChannel.applicantId,
+                ApplicantGeneralInformation.programRegistered == ApplicantAdmissionChannel.programRegistered
+            )
+        )
         .filter(ApplicantGeneralInformation.applicantId == applicant_id)
         .filter(ApplicantGeneralInformation.programRegistered == admissionId)
         .first()
@@ -142,8 +167,20 @@ def get_applicant_education_info(db: Session, applicant_id: str, admId: str):
             ApplicantEnglishExam,
             ApplicantMathematicsExam
         )
-        .outerjoin(ApplicantEnglishExam, ApplicantAcademicBackground.applicantId == ApplicantEnglishExam.applicantId)
-        .outerjoin(ApplicantMathematicsExam, ApplicantAcademicBackground.applicantId == ApplicantMathematicsExam.applicantId)
+        .outerjoin(
+            ApplicantEnglishExam,
+            and_(
+                ApplicantAcademicBackground.applicantId == ApplicantEnglishExam.applicantId,
+                ApplicantAcademicBackground.programRegistered == ApplicantEnglishExam.programRegistered
+            )
+        )
+        .outerjoin(
+            ApplicantMathematicsExam,
+            and_(
+                ApplicantAcademicBackground.applicantId == ApplicantMathematicsExam.applicantId,
+                ApplicantAcademicBackground.programRegistered == ApplicantMathematicsExam.programRegistered
+            )
+        )
         .filter(ApplicantAcademicBackground.applicantId == applicant_id)
         .filter(ApplicantAcademicBackground.programRegistered == admId)
         .first()
@@ -432,15 +469,16 @@ def updated_applicant_status(db: Session, appId: str, admId: str):
 
 
 def get_admission_id_by_app_id(db: Session, appId: str):
-    applicant = db.query(ApplicantGeneralInformation).filter(ApplicantGeneralInformation.applicantId == appId).first()
+    applicant = db.query(ApplicantGeneralInformation).filter(ApplicantGeneralInformation.applicantId == appId).all()
 
     if not applicant:
-        raise HTTPException(status_code=404, detail=f"Applicant with ID: {appId} Not Found")
+        return []
     
-    if not applicant.programRegistered:
-        return ""
+    result = []
+    for app in applicant:
+        result.append(app.programRegistered)
 
-    return applicant.programRegistered
+    return result
 
 
 def registration_applicant_to_admission(db: Session, appId: str, admissionId: str):
@@ -546,3 +584,163 @@ def get_applicant_info_registrations(db: Session, appId: str) -> ApplicantRegist
     
     return applicant
 
+
+def get_applicant_follow_status(db: Session, appId: str):
+    applicant = (
+        db.query(
+            ApplicantGeneralInformation,
+            ApplicantStatus,
+            Admission
+        )
+        .outerjoin(
+            ApplicantStatus,
+            and_(
+                ApplicantGeneralInformation.applicantId == ApplicantStatus.applicantId,
+                ApplicantGeneralInformation.programRegistered == ApplicantStatus.programRegistered
+            )
+        )
+        .outerjoin(Admission, ApplicantGeneralInformation.programRegistered == Admission.admissionId)
+        .filter(ApplicantGeneralInformation.applicantId == appId)
+        .all()
+    )
+
+    result = []
+
+    for general, status, admission in applicant:
+        item = {
+            "admissionId": admission.admissionId,
+            "course": f"{admission.program} {admission.roundName} {admission.academicYear}",
+            "period": f"{admission.startDate} - {admission.endDate}",
+            "applicant_number": general.applicant_number,
+            "admissionStatus": status.admissionStatus,
+            "docStatus": status.docStatus,
+            "paymentStatus": status.paymentStatus
+        }
+
+        result.append(item)
+
+    return result
+
+
+def process_is_applicant_complete(db: Session, appId: str, admId: str):
+    applicant = db.query(ApplicantRegistrations).filter_by(applicantId=appId).first()
+    admission = db.query(Admission).filter_by(admissionId=admId).first()
+    
+    if not applicant:
+        raise HTTPException(status_code=404, detail=f"Applicant with ID: {appId} Not Found")
+    
+    general = db.query(ApplicantGeneralInformation).filter_by(
+            applicantId=appId,
+            programRegistered=admId
+    ).first()
+
+    address = db.query(ApplicantAddress).filter_by(
+        applicantId=appId,
+        programRegistered=admId
+    ).first()
+
+    if applicant.nationality == "Thai":
+
+        if not general or not general.applicantPicture or not general.birthDate or not general.gender or not general.docCopyIdCard or not general.idCardExpDate or not general.docCopyHouseRegis:
+            return {"isComplete": False, "missing": "General Information not found"}
+    
+        if not address or not address.province or not address.district or not address.subDistrict:
+            return {"isComplete": False, "missing": "Address Information not found"}
+    
+    else:
+        if not general or not general.applicantPicture or not general.birthDate or not general.gender or not general.docCopyPassport or not general.passportExpDate:
+            return {"isComplete": False, "missing": "General Information not found"}
+    
+        if not address:
+            return {"isComplete": False, "missing": "Address Information not found"}
+
+
+    contact = db.query(ApplicantContact).filter_by(
+        applicantId=appId,
+        programRegistered=admId
+    ).first()
+
+    if not contact or not contact.applicantPhone:
+        return {"isComplete": False, "missing": "Contact Information not found"}
+    
+
+    emer_contact = db.query(ApplicantContactPerson).filter_by(
+        applicantId=appId,
+        programRegistered=admId
+    ).first()
+
+    if not emer_contact or not emer_contact.contactFirstNameEN or not emer_contact.contactLastNameEN or not emer_contact.relationship or not emer_contact.contactPhone:
+        return {"isComplete": False, "missing": "Emergency Contact Information not found"}
+    
+
+    channel = db.query(ApplicantAdmissionChannel).filter_by(
+        applicantId=appId,
+        programRegistered=admId
+    ).first()
+
+    if not channel or not channel.onlineChannel or not channel.offlineChannel:
+        return {"isComplete": False, "missing": "Admission channel Information not found"}
+    
+
+    academic = db.query(ApplicantAcademicBackground).filter_by(
+        applicantId=appId,
+        programRegistered=admId
+    ).first()
+
+
+    if "DST" in admission.program and not academic or not academic.dstEnglish or not academic.dstMathematics or not academic.dstScitech:
+        return {"isComplete": False, "missing": "Education Information not found"}
+        
+    if academic.currentStatus == "graduated" and not academic.graduateDate:
+        return {"isComplete": False, "missing": "Education Information not found"}
+
+    if not academic or not academic.currentStatus or not academic.docCopyTrans or not academic.studyPlan or not academic.cumulativeGPA:
+        return {"isComplete": False, "missing": "Education Information not found"}
+    
+
+    document = db.query(ApplicantAdditionalDocuments).filter_by(
+        applicantId=appId,
+        programRegistered=admId
+    ).first()
+
+    if not document or not document.stateOfPurpose or not document.portfolio or not document.vdo:
+        return {"isComplete": False, "missing": "Document Information not found"}
+    
+    return {"isComplete": True}
+
+
+def process_get_applicant_status(db: Session, appId: str, admId: str):
+    admission_status = db.query(ApplicantStatus).filter_by(
+        applicantId=appId,
+        programRegistered=admId
+    ).first()
+    
+    if not admission_status:
+        raise HTTPException(status_code=404, detail=f"Applicant with ID: {appId} Not Found")
+    
+    return admission_status.admissionStatus
+
+
+def process_applicant_cancel(db: Session, cancel_data: ApplicantCancel):
+    status = db.query(ApplicantStatus).filter_by(
+        applicantId=cancel_data.applicantId,
+        programRegistered=cancel_data.admissionId
+    ).first()
+
+    if not status:
+        raise HTTPException(status_code=404, detail=f"Applicant with ID: {cancel_data.applicantId} Not Found")
+
+    status.admissionStatus = "09 - ยกเลิกการสมัคร"
+
+    applicant_cancel = ApplicantAdmissionCancel(
+        applicantId=cancel_data.applicantId,
+        programRegistered=cancel_data.admissionId,
+        reason=cancel_data.reason,
+        moreDetail=cancel_data.details
+    )
+
+    db.add(applicant_cancel)
+    db.commit()
+    db.refresh(applicant_cancel)
+
+    return applicant_cancel
