@@ -33,6 +33,7 @@ class InterviewCommitteeResponse(InterviewCommitteeBase):
 
 
 class InterviewApplicantDataMainPageResponse(BaseModel):
+    admissionId: Optional[str] = None
     roundName: Optional[str] = None
     applicantId: Optional[str] = None
     firstnameEN: Optional[str] = None
@@ -109,6 +110,7 @@ class InterviewEvaUpdate(BaseModel):
 
 class InterviewEvaCreate(BaseModel):
     applicantId: Optional[str] = None
+    programRegistered: Optional[str] = None
     room: Optional[str] = None
     intDate: Optional[str] = None
     intTime: Optional[str] = None
@@ -146,6 +148,7 @@ class InterviewRoomUpdate(BaseModel):
 
 class EditInterviewRoom(BaseModel):
     applicantId: Optional[str] = None
+    programRegistered: Optional[str] = None
     interviewRoom: Optional[str] = None
     interviewRoundId: Optional[str] = None
     interviewTime: Optional[str] = None

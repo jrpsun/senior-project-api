@@ -49,6 +49,7 @@ class CourseApplicantDataMainPageResponse(BaseModel):
     preliminaryEva: Optional[str] = None
     preliminaryComment: Optional[str] = None
     applicantNumber: Optional[str] = None
+    programRegistered: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -60,8 +61,8 @@ class CourseListApplicantDataMainPageResponse(BaseModel):
 
 class PreEvaPageResponse(BaseModel):
     applicantId: Optional[str] = None
-    firstnameEN: Optional[str] = None
-    lastnameEN: Optional[str] = None
+    firstnameTH: Optional[str] = None
+    lastnameTH: Optional[str] = None
     comPrefix: Optional[str] = None
     firstName: Optional[str] = None
     lastName: Optional[str] = None
@@ -72,6 +73,7 @@ class PreEvaPageResponse(BaseModel):
 
 class PreEvaRequest(BaseModel):
     app_id: str
+    programRegistered: str
     com_id: str
     preEvaResult: str
     comment: Optional[str] = None

@@ -7,6 +7,8 @@ from app.models.admission import Admission
 from app.models.interview_round import InterviewRound
 from app.models.interview_room_details import InterviewRoomDetails
 from app.models.interview_room_committee import InterviewRoomCommittee
+from app.models.applicant_registrations import ApplicantRegistrations
+from sqlalchemy import and_
 from app.schemas.interview_committee import (
     InterviewCommitteeCreate,
     InterviewCommitteeUpdate,
@@ -34,7 +36,7 @@ def create_interview_committee(db: Session, ic_data: InterviewCommitteeCreate):
         password=ic_data.password,
         email=ic_data.email,
         phoneNumber=ic_data.phoneNumber,
-        lastSeen=datetime.now().strftime("%d-%m-%Y %H.%M")
+        lastSeen=datetime.now().strftime("%Y-%m-%d %H:%M")
     )
     db.add(new_ic)
     db.commit()
@@ -72,18 +74,22 @@ def delete_interview_committee(db: Session, ic_id: str):
 
 # interview com screening page
 def get_all_applicants_interview_main_page(db: Session, committee_id: str):
-    # Step 1: Get applicants evaluated by this committee
-    applicant_ids_subquery = (
-        db.query(InterviewEvaluation.applicantId)
+    # Step 1: Get only applicantId and programRegistered pairs for this committee
+    filtered_eval_subquery = (
+        db.query(
+            InterviewEvaluation.applicantId,
+            InterviewEvaluation.programRegistered
+        )
         .filter(InterviewEvaluation.interviewComId == committee_id)
         .distinct()
         .subquery()
     )
 
-    # Step 2: Get full evaluation data for those applicants
+    # Step 2: Get full evaluation info for only the filtered (applicantId, programRegistered)
     subquery = (
         db.query(
             InterviewEvaluation.applicantId.label("applicantId"),
+            InterviewEvaluation.programRegistered.label("admissionId"),
             InterviewEvaluation.interviewDate.label("interviewDate"),
             InterviewEvaluation.interviewTime.label("interviewTime"),
             InterviewEvaluation.interviewRoom.label("interviewRoom"),
@@ -93,13 +99,18 @@ def get_all_applicants_interview_main_page(db: Session, committee_id: str):
             InterviewCommittee.lastName.label("lastName"),
         )
         .join(InterviewCommittee, InterviewEvaluation.interviewComId == InterviewCommittee.interviewComId)
-        .filter(InterviewEvaluation.applicantId.in_(applicant_ids_subquery))
+        .join(filtered_eval_subquery, and_(
+            InterviewEvaluation.applicantId == filtered_eval_subquery.c.applicantId,
+            InterviewEvaluation.programRegistered == filtered_eval_subquery.c.programRegistered
+        ))
         .subquery()
     )
 
+    # Step 3: Join other related tables using the applicantId + admissionId
     query = (
         db.query(
             subquery.c.applicantId,
+            subquery.c.admissionId,
             subquery.c.interviewDate,
             subquery.c.interviewTime,
             subquery.c.interviewRoom,
@@ -107,37 +118,52 @@ def get_all_applicants_interview_main_page(db: Session, committee_id: str):
             subquery.c.prefix,
             subquery.c.firstName,
             subquery.c.lastName,
-            ApplicantGeneralInformation.firstnameEN,
-            ApplicantGeneralInformation.lastnameEN,
-            ApplicantGeneralInformation.firstnameTH,
-            ApplicantGeneralInformation.lastnameTH,
+            ApplicantRegistrations.firstnameEN,
+            ApplicantRegistrations.lastnameEN,
+            ApplicantRegistrations.firstnameTH,
+            ApplicantRegistrations.lastnameTH,
             ApplicantStatus.admissionStatus,
             ApplicantStatus.docStatus,
             ApplicantStatus.interviewStatus,
+            Admission.admissionId,
             Admission.roundName,
             Admission.program
         )
-        .outerjoin(ApplicantGeneralInformation, subquery.c.applicantId == ApplicantGeneralInformation.applicantId)
+        .outerjoin(
+            ApplicantGeneralInformation,
+            and_(
+                subquery.c.applicantId == ApplicantGeneralInformation.applicantId,
+                subquery.c.admissionId == ApplicantGeneralInformation.programRegistered
+            )
+        )
+        .outerjoin(ApplicantRegistrations, ApplicantGeneralInformation.applicantId == ApplicantRegistrations.applicantId)
         .outerjoin(Admission, ApplicantGeneralInformation.programRegistered == Admission.admissionId)
-        .outerjoin(ApplicantStatus, ApplicantGeneralInformation.applicantId == ApplicantStatus.applicantId)
+        .outerjoin(
+            ApplicantStatus,
+            and_(
+                subquery.c.applicantId == ApplicantStatus.applicantId,
+                subquery.c.admissionId == ApplicantStatus.programRegistered
+            )
+        )
         .all()
     )
 
     if not query:
         return {"applicants": []}
 
-    # Step 3: Group by applicantId and assign up to 2 committee members
+    # Step 4: Group by applicantId + admissionId
     applicant_map = {}
     for row in query:
-        app_id = row.applicantId
+        key = (row.applicantId, row.admissionId)
 
-        firstname = row.firstnameTH if row.firstnameTH and row.firstnameTH.lower() != "string" else row.firstnameEN
-        lastname = row.lastnameTH if row.lastnameTH and row.lastnameTH.lower() != "string" else row.lastnameEN
+        firstname = row.firstnameTH if row.firstnameTH and row.firstnameTH.lower() != 'none' else row.firstnameEN
+        lastname = row.lastnameTH if row.lastnameTH and row.lastnameTH.lower() != 'none' else row.lastnameEN
 
-        if app_id not in applicant_map:
-            applicant_map[app_id] = {
+        if key not in applicant_map:
+            applicant_map[key] = {
+                "admissionId": row.admissionId,
                 "roundName": row.roundName,
-                "applicantId": app_id,
+                "applicantId": row.applicantId,
                 "firstnameEN": firstname,
                 "lastnameEN": lastname,
                 "program": row.program,
@@ -155,11 +181,10 @@ def get_all_applicants_interview_main_page(db: Session, committee_id: str):
                 "lastName2": None
             }
         else:
-            # Fill second committee member if not already set
-            if not applicant_map[app_id]["prefix2"]:
-                applicant_map[app_id]["prefix2"] = row.prefix
-                applicant_map[app_id]["firstName2"] = row.firstName
-                applicant_map[app_id]["lastName2"] = row.lastName
+            if not applicant_map[key]["prefix2"]:
+                applicant_map[key]["prefix2"] = row.prefix
+                applicant_map[key]["firstName2"] = row.firstName
+                applicant_map[key]["lastName2"] = row.lastName
 
     response_list = [
         InterviewApplicantDataMainPageResponse(**data).model_dump(exclude_unset=True)
@@ -167,6 +192,7 @@ def get_all_applicants_interview_main_page(db: Session, committee_id: str):
     ]
 
     return InterviewListApplicantDataMainPageResponse(applicants=response_list)
+
 
 
 
@@ -235,7 +261,7 @@ def get_interview_eva_page(db :Session, applicant_id: str):
     return InterviewEvaListPageResponse(applicants=response_list)
 
 # interview eva page
-def update_interview_eva_to_applicant(db: Session, app_id: str, com_id: str, inEva_data: InterviewEvaUpdate):
+def update_interview_eva_to_applicant(db: Session, app_id: str, com_id: str, adm_id: str, inEva_data: InterviewEvaUpdate):
     update_data = {
         "englishScore": inEva_data.englishScore,
         "personalityScore": inEva_data.personalityScore,
@@ -256,12 +282,14 @@ def update_interview_eva_to_applicant(db: Session, app_id: str, com_id: str, inE
 
     db.query(InterviewEvaluation).filter(
         InterviewEvaluation.applicantId == app_id,
+        InterviewEvaluation.programRegistered == adm_id,
         InterviewEvaluation.interviewComId == com_id
     ).update(update_data, synchronize_session=False)
 
     # Get all evaluations
     evaluations = db.query(InterviewEvaluation).filter(
         InterviewEvaluation.applicantId == app_id,
+        InterviewEvaluation.programRegistered == adm_id,
         InterviewEvaluation.educationId == None
     ).all()
 
@@ -302,11 +330,13 @@ def update_interview_eva_to_applicant(db: Session, app_id: str, com_id: str, inE
 
     # Save statuses
     db.query(ApplicantStatus).filter(
-        ApplicantStatus.applicantId == app_id
+        ApplicantStatus.applicantId == app_id,
+        ApplicantStatus.programRegistered == adm_id
     ).update({"interviewStatus": interviewStatus}, synchronize_session=False)
 
     db.query(ApplicantStatus).filter(
-        ApplicantStatus.applicantId == app_id
+        ApplicantStatus.applicantId == app_id,
+        ApplicantStatus.programRegistered == adm_id
     ).update({"admissionStatus": admissionStatus}, synchronize_session=False)
 
     db.commit()
@@ -324,6 +354,7 @@ def create_interview_eva(db: Session, newEva_data: list[InterviewEvaCreate]):
         for committee_id in eva.committeeId:
             new_eva = InterviewEvaluation(
                 applicantId=eva.applicantId,
+                programRegistered=eva.programRegistered,
                 interviewComId=committee_id,
                 interviewRoundId=eva.interviewRoundId,
                 interviewRoom=eva.room,
@@ -333,12 +364,14 @@ def create_interview_eva(db: Session, newEva_data: list[InterviewEvaCreate]):
             db.add(new_eva)
             new_evaluations.append(new_eva)
 
-        applicant_status = db.query(ApplicantStatus).filter_by(applicantId=eva.applicantId).first()
-        if applicant_status:
-            applicant_status.interviewStatus = "01 - รอสัมภาษณ์"
-            applicant_status.admissionStatus = "06 - รอสัมภาษณ์"
-        else:
-            print(f"ApplicantStatus not found for {eva.applicantId}")
+        db.query(ApplicantStatus).filter(
+            ApplicantStatus.applicantId == eva.applicantId, 
+            ApplicantStatus.programRegistered == eva.programRegistered
+        ).update({
+            "admissionStatus": "06 - รอสัมภาษณ์",
+            "interviewStatus": "01 - รอสัมภาษณ์"
+        }, synchronize_session=False)
+        
 
     db.commit()
     for e in new_evaluations:
@@ -446,7 +479,10 @@ def update_interview_room(db: Session, room_id: str, IntRoom_data: InterviewRoom
 
 # updating interview room for interview auto grouping page
 def update_interview_room_auto_group(db: Session, update_data: EditInterviewRoom):
-    db.query(InterviewEvaluation).filter(InterviewEvaluation.applicantId == update_data.applicantId).update(
+    db.query(InterviewEvaluation).filter(
+        InterviewEvaluation.applicantId == update_data.applicantId,
+        InterviewEvaluation.programRegistered == update_data.programRegistered
+        ).update(
         {
             InterviewEvaluation.interviewRoundId: update_data.interviewRoundId,
             InterviewEvaluation.interviewRoom: update_data.interviewRoom,

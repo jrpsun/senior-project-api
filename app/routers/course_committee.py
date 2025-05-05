@@ -50,15 +50,7 @@ def delete_committee(committee_id: str, db: Session = Depends(get_db)):
     return {"message": "Course Committee deleted successfully"}
 
 
-@router.get("/all-applicant-courseC", response_model=CourseListApplicantDataMainPageResponse)
-def read_all_applicants(committee_id: Optional[str] = None, db: Session = Depends(get_db)):
-    read_all_applicants = crud.get_all_applicants_course_main_page(db, committee_id)
-    if not read_all_applicants:
-        raise HTTPException(status_code=404, detail="Applicant Information not found")
-    return read_all_applicants
-
-
-@router.get("/all-applicant-courseC/{committee_id}", response_model=CourseListApplicantDataMainPageResponse)
+@router.get("/all-applicant-with-courseC/{committee_id}", response_model=CourseListApplicantDataMainPageResponse)
 def read_all_applicants_for_coursecom(committee_id: Optional[str] = None, db: Session = Depends(get_db)):
     read_all_applicants = crud.get_all_applicants_course_main_page(db, committee_id)
     if not read_all_applicants:
@@ -66,9 +58,17 @@ def read_all_applicants_for_coursecom(committee_id: Optional[str] = None, db: Se
     return read_all_applicants
 
 
-@router.get("/get-preEva/{applican_id}")
-def get_pre_eva_info(applican_id: str, db: Session = Depends(get_db)):
-    get_pre_eva_info = crud.get_pre_eva_page(db, applican_id)
+@router.get("/all-applicant-courseC", response_model=CourseListApplicantDataMainPageResponse)
+def read_all_applicants(committee_id: Optional[str] = None, db: Session = Depends(get_db)):
+    read_all_applicants = crud.get_all_applicants_course_main_page(db)
+    if not read_all_applicants:
+        raise HTTPException(status_code=404, detail="Applicant Information not found")
+    return read_all_applicants
+
+
+@router.get("/get-preEva/{applican_id}/{adm_id}")
+def get_pre_eva_info(applican_id: str, adm_id: str, db: Session = Depends(get_db)):
+    get_pre_eva_info = crud.get_pre_eva_page(db, applican_id, adm_id)
     if not get_pre_eva_info:
         raise HTTPException(status_code=404, detail="Not found Preliminary Evaluation for applicant id {applican_id}")
     return get_pre_eva_info

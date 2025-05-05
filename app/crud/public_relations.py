@@ -14,7 +14,7 @@ def create_public_relation(db: Session, pr_data: PublicRelationsCreate):
         password=pr_data.password,
         email=pr_data.email,
         phoneNumber=pr_data.phoneNumber,
-        lastSeen=datetime.now().strftime("%d-%m-%Y %H.%M")
+        lastSeen=datetime.now().strftime("%Y-%m-%d %H:%M")
     )
     db.add(new_pr)
     db.commit()

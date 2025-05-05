@@ -78,7 +78,7 @@ class CommitteeResult(BaseModel):
     InterviewResult: Optional[str]
 
 
-class SummaryInterviewPageResponse(BaseModel):
+class SummaryInterviewPageResponseDUP(BaseModel):
     interviewStatus: Optional[str] = None
     admissionStatus: Optional[str] = None
     docStatus: Optional[str] = None
@@ -105,13 +105,14 @@ class SummaryInterviewPageResponse(BaseModel):
 
 
 
-class SummaryInterviewListPageResponse(BaseModel):
-    applicants: list[SummaryInterviewPageResponse]
+class SummaryInterviewListPageResponseDUP(BaseModel):
+    applicants: list[SummaryInterviewPageResponseDUP]
 
 
 class PreEvaUpdateApplicantModel(BaseModel):
     app_id: str
     com_id: str
+    program_id: str
 
 
 class EduInterviewEvaResponse(BaseModel):
@@ -310,12 +311,7 @@ class SummaryInterviewListPageResponse(BaseModel):
     applicants: list[SummaryInterviewPageResponse]
 
 
-class PreEvaUpdateApplicantModel(BaseModel):
-    app_id: str
-    com_id: str
-
-
-class TESTEduInterviewEvaResponse(BaseModel):
+'''class TESTEduInterviewEvaResponse(BaseModel):
     applicantId: Optional[str] = None
     firstnameEN: Optional[str] = None
     lastnameEN: Optional[str] = None
@@ -341,7 +337,7 @@ class TESTEduInterviewEvaResponse(BaseModel):
 
 
 class TESTEduInterviewEvaListResponse(BaseModel):
-    applicants: list[TESTEduInterviewEvaResponse]
+    applicants: list[TESTEduInterviewEvaResponse]'''
 
 
 class InterviewRoundResponse(BaseModel):
@@ -456,6 +452,7 @@ class ApplicantInformationProblem(BaseModel):
 
 class FinalInterviewResult(BaseModel):
     applicantId: Optional[str] = None
+    admissionId: Optional[str] = None
     educationId: Optional[str] = None
     interviewResult: Optional[str] = None
     comment: Optional[str] = None
@@ -516,6 +513,7 @@ class IntEvaSummaryResponse(BaseModel):
     admissionProgram: Optional[str] = None
     admissionRoundName: Optional[str] = None
     applicants: list[IntEvaSummaryApplicantsResponse] = []
+    academicYear: Optional[str] = None
 
 
 class IntEvaSummaryListResponse(BaseModel):
