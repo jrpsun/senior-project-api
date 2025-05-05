@@ -107,6 +107,7 @@ def get_all_applicants_edu_main_page(db: Session):
             "firstnameEN": register.firstnameTH if register.firstnameTH not in [None, ""] else register.firstnameEN,
             "lastnameEN": register.lastnameTH if register.lastnameTH not in [None, ""] else register.lastnameEN,
             "program": admit.program if admit.program else None,
+            "year": admit.academicYear if admit.academicYear else None,
             "admissionStatus": status.admissionStatus if status.admissionStatus else None,
             "docStatus": status.docStatus if status.docStatus else None,
             "paymentStatus": status.paymentStatus if status.paymentStatus else None,

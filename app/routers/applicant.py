@@ -140,3 +140,35 @@ def edit_applicant_edit_info(
     return crud.updated_applicant_profile(db, appId, data)
 
 
+@router.get("/follow-status/{appId}")
+def get_applicant_status(
+    appId: str,
+    db: Session = Depends(get_db)
+):
+    return crud.get_applicant_follow_status(db, appId)
+
+
+@router.get("/{appId}/{admId}/is-complete")
+def is_applicant_complete(
+    appId: str,
+    admId: str,
+    db: Session = Depends(get_db)
+):
+    return crud.process_is_applicant_complete(db, appId, admId)
+
+
+@router.get("/applicant-status/{appId}/{admId}")
+def get_applicant_status(
+    appId: str,
+    admId: str,
+    db: Session = Depends(get_db)
+):
+    return crud.process_get_applicant_status(db, appId, admId)
+
+
+@router.put("/applicant-cancel")
+def applicant_cancel(
+    cancel_data: ApplicantCancel,
+    db: Session = Depends(get_db)
+):
+    return crud.process_applicant_cancel(db, cancel_data)

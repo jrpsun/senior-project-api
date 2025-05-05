@@ -372,3 +372,10 @@ class ApplicantRegistrationsResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class ApplicantCancel(BaseModel):
+    applicantId: str
+    admissionId: str
+    reason: Optional[str] = None
+    details: Optional[str] = None
