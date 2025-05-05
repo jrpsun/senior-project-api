@@ -30,7 +30,9 @@ def create_course_committee(db: Session, committee_data: CourseCommitteeCreate):
         password=committee_data.password,
         email=committee_data.email,
         phoneNumber=committee_data.phoneNumber,
-        lastSeen=datetime.now().strftime("%d-%m-%Y %H.%M")
+        lastSeen=datetime.now().strftime("%Y-%m-%d %H:%M")
+
+
     )
     db.add(new_committee)
     db.commit()
@@ -71,7 +73,7 @@ def delete_course_committee(db: Session, committee_id: str):
         db.commit()
     return committee_record
 
-# course com screening page
+# admin/screening/tracking 
 def get_all_applicants_course_main_page(db: Session, committee_id: Optional[str] = None):
     query = db.query(
             PreliminaryEvaluation.applicantId.label("applicantId"),
@@ -92,6 +94,7 @@ def get_all_applicants_course_main_page(db: Session, committee_id: Optional[str]
             ApplicantRegistrations.firstnameTH.label("firstnameTH"),
             ApplicantRegistrations.lastnameTH.label("lastnameTH"),
             ApplicantGeneralInformation.applicant_number.label("applicantNumber"),
+            ApplicantGeneralInformation.programRegistered.label("programRegistered")
         )
     
     if committee_id:
@@ -143,7 +146,8 @@ def get_all_applicants_course_main_page(db: Session, committee_id: Optional[str]
             "preEvaDate": row.preEvaDate,
             "preliminaryEva": row.preliminaryEva,
             "preliminaryComment": row.preliminaryComment,
-            "applicantNumber": row.applicantNumber
+            "applicantNumber": row.applicantNumber,
+            "programRegistered": row.programRegistered
         }
 
         response_list.append(CourseApplicantDataMainPageResponse(**response_data).model_dump(exclude_unset=True))
@@ -153,7 +157,7 @@ def get_all_applicants_course_main_page(db: Session, committee_id: Optional[str]
 
 
 # pre eva tab in view applicant information page
-def get_pre_eva_page(db :Session, applicant_id: str):
+def get_pre_eva_page(db :Session, applicant_id: str, adm_id: str):
     query = (
         db.query(
             PreliminaryEvaluation.applicantId.label("applicantId"),
@@ -163,12 +167,12 @@ def get_pre_eva_page(db :Session, applicant_id: str):
             CourseCommittee.prefix.label("courseC_prefix"),
             CourseCommittee.firstName.label("courseC_firstName"),
             CourseCommittee.lastName.label("courseC_lastName"),
-            ApplicantGeneralInformation.firstnameEN.label("firstnameEN"),
-            ApplicantGeneralInformation.lastnameEN.label("lastnameEN")
+            ApplicantRegistrations.firstnameTH.label("firstnameTH"),
+            ApplicantRegistrations.lastnameTH.label("lastnameTH")
             )
             .outerjoin(CourseCommittee, PreliminaryEvaluation.courseComId == CourseCommittee.courseComId)
-            .outerjoin(ApplicantGeneralInformation, PreliminaryEvaluation.applicantId == ApplicantGeneralInformation.applicantId)
-            .filter(PreliminaryEvaluation.applicantId == applicant_id)
+            .outerjoin(ApplicantRegistrations, PreliminaryEvaluation.applicantId == ApplicantRegistrations.applicantId)
+            .filter(PreliminaryEvaluation.applicantId == applicant_id, PreliminaryEvaluation.programRegistered == adm_id)
     )
 
     if not query:
@@ -178,8 +182,8 @@ def get_pre_eva_page(db :Session, applicant_id: str):
         response_data = {
 
         "applicantId": row.applicantId,
-        "firstnameEN": row.firstnameEN,
-        "lastnameEN": row.lastnameEN,
+        "firstnameTH": row.firstnameTH,
+        "lastnameTH": row.lastnameTH,
         "comPrefix": row.courseC_prefix,
         "firstName": row.courseC_firstName,
         "lastName": row.courseC_lastName,
@@ -200,7 +204,8 @@ def update_pre_eva_to_applicant(db: Session, payload: PreEvaRequest):
 
     pre_eva_updated = db.query(PreliminaryEvaluation).filter(
         PreliminaryEvaluation.applicantId == payload.app_id,
-        PreliminaryEvaluation.courseComId == payload.com_id
+        PreliminaryEvaluation.courseComId == payload.com_id,
+        PreliminaryEvaluation.programRegistered == payload.programRegistered
     ).update(
         {
             PreliminaryEvaluation.preliminaryEva: payload.preEvaResult,
@@ -211,7 +216,8 @@ def update_pre_eva_to_applicant(db: Session, payload: PreEvaRequest):
     )
 
     applicant_status_updated = db.query(ApplicantStatus).filter(
-        ApplicantStatus.applicantId == payload.app_id
+        ApplicantStatus.applicantId == payload.app_id,
+        ApplicantStatus.programRegistered == payload.programRegistered
     ).update(
         {
             ApplicantStatus.admissionStatus: status

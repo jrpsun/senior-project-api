@@ -70,8 +70,8 @@ def get_interview_eva_info(applican_id: str, db: Session = Depends(get_db)):
 
 
 @router.put("/update-interview-Eva")
-def update_interview_Eva(app_id: str, com_id: str, inEva_data: InterviewEvaUpdate, db: Session = Depends(get_db)):
-    success = crud.update_interview_eva_to_applicant(db, app_id, com_id, inEva_data)
+def update_interview_Eva(app_id: str, com_id: str, adm_id: str, inEva_data: InterviewEvaUpdate, db: Session = Depends(get_db)):
+    success = crud.update_interview_eva_to_applicant(db, app_id, com_id, adm_id, inEva_data)
     if not success:
         raise HTTPException(status_code=404, detail=f"Applicant id {app_id} not found")
     
