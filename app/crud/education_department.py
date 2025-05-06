@@ -283,6 +283,7 @@ def get_all_applicant_summary_interview_page(db: Session):
             InterviewEvaluation.applicantId.label("applicantId"),
             InterviewEvaluation.interviewComId.label("interviewComId"),
             InterviewEvaluation.interviewResult.label("interviewResult"),
+            InterviewEvaluation.interviewRoundId.label("interviewRoundId"),
             ApplicantRegistrations.firstnameEN.label("firstnameEN"),
             ApplicantRegistrations.lastnameEN.label("lastnameEN"),
             ApplicantRegistrations.firstnameTH.label("firstnameTH"),
@@ -295,24 +296,26 @@ def get_all_applicant_summary_interview_page(db: Session):
             InterviewCommittee.firstName.label("cFirstName"),
             InterviewCommittee.lastName.label("cLastName"),
         )
-        .select_from(ApplicantGeneralInformation)
+        .select_from(InterviewEvaluation)
+        .filter(InterviewEvaluation.educationId == None)
         .outerjoin(
-            InterviewEvaluation,
+            ApplicantGeneralInformation,
             and_(
                 InterviewEvaluation.applicantId == ApplicantGeneralInformation.applicantId,
                 InterviewEvaluation.programRegistered == ApplicantGeneralInformation.programRegistered
             )
         )
+        .outerjoin(ApplicantRegistrations, ApplicantGeneralInformation.applicantId == ApplicantRegistrations.applicantId)
         .outerjoin(InterviewCommittee, InterviewEvaluation.interviewComId == InterviewCommittee.interviewComId)
         .outerjoin(
             ApplicantStatus, 
             and_(
-                ApplicantGeneralInformation.applicantId == ApplicantStatus.applicantId,
-                ApplicantGeneralInformation.programRegistered == ApplicantStatus.programRegistered
+                InterviewEvaluation.applicantId == ApplicantStatus.applicantId,
+                InterviewEvaluation.programRegistered == ApplicantStatus.programRegistered
             )
         )
-        .outerjoin(Admission, ApplicantGeneralInformation.programRegistered == Admission.admissionId)
-        .outerjoin(ApplicantRegistrations, ApplicantGeneralInformation.applicantId == ApplicantRegistrations.applicantId)
+        .outerjoin(Admission, InterviewEvaluation.programRegistered == Admission.admissionId)
+        
     ).all()
 
 
@@ -348,6 +351,7 @@ def get_all_applicant_summary_interview_page(db: Session):
                 "programRegistered": admission_id,
                 "program": row.program,
                 "roundName": row.roundName,
+                "interviewRoundId": row.interviewRoundId
             })
 
         if row.interviewComId:
@@ -563,15 +567,33 @@ def get_all_applicant_result_interview_eva_page(db: Session, applicant_id: str, 
 
 ########## interview round ##########
 def get_interview_round(db: Session):
-    query = db.query(
-        InterviewRound.interviewRoundId.label("interviewRoundId"),
-        InterviewRound.admissionProgram.label("admissionProgram"),
-        InterviewRound.admissionRoundName.label("admissionRoundName"),
-        InterviewRound.interviewDate.label("interviewDate"),
-        InterviewRound.startTime.label("startTime"),
-        InterviewRound.endTime.label("endTime"),
-        InterviewRound.duration.label("duration")
-    ).all()
+    # Use outerjoin to include InterviewRounds even if they have no rooms
+    query = (
+        db.query(
+            InterviewRound.interviewRoundId.label("interviewRoundId"),
+            InterviewRound.admissionProgram.label("admissionProgram"),
+            InterviewRound.admissionRoundName.label("admissionRoundName"),
+            InterviewRound.interviewDate.label("interviewDate"),
+            InterviewRound.startTime.label("startTime"),
+            InterviewRound.endTime.label("endTime"),
+            InterviewRound.duration.label("duration"),
+            func.count(InterviewRoomDetails.interviewRoomId).label("interviewRoomNumber")
+        )
+        .outerjoin(
+            InterviewRoomDetails,
+            InterviewRound.interviewRoundId == InterviewRoomDetails.interviewRoundId
+        )
+        .group_by(
+            InterviewRound.interviewRoundId,
+            InterviewRound.admissionProgram,
+            InterviewRound.admissionRoundName,
+            InterviewRound.interviewDate,
+            InterviewRound.startTime,
+            InterviewRound.endTime,
+            InterviewRound.duration
+        )
+        .all()
+    )
 
     if not query:
         return {"Message": "Interview Round not found"}
@@ -583,9 +605,10 @@ def get_interview_round(db: Session):
             "admissionProgram": row.admissionProgram,
             "admissionRoundName": row.admissionRoundName,
             "interviewDate": row.interviewDate,
-            "startTime": row.startTime, 
-            "endTime": row.endTime, 
-            "duration": row.duration 
+            "startTime": row.startTime,
+            "endTime": row.endTime,
+            "duration": row.duration,
+            "interviewRoomNumber": row.interviewRoomNumber
         }
 
         response_list.append(InterviewRoundResponse(**response_data).model_dump(exclude_unset=True))
@@ -1014,6 +1037,8 @@ def get_interview_summary(db: Session) -> IntEvaSummaryListResponse:
     for room in rooms:
         # Find interview round
         interview_round = db.query(InterviewRound).filter(InterviewRound.interviewRoundId == room.interviewRoundId).first()
+        # Admission 
+        admission = db.query(Admission).filter(Admission.program == interview_round.admissionProgram, Admission.roundName == interview_round.admissionRoundName).first()
 
         # Find committees in the room
         committees = (
@@ -1092,6 +1117,7 @@ def get_interview_summary(db: Session) -> IntEvaSummaryListResponse:
             IntEvaSummaryResponse(
                 committee=combined_committee_name,
                 interviewRoom=room.interviewRoom,
+                academicYear=admission.academicYear if admission else None,
                 admissionProgram=interview_round.admissionProgram if interview_round else None,
                 admissionRoundName=interview_round.admissionRoundName if interview_round else None,
                 applicants=applicants_list
@@ -1101,12 +1127,18 @@ def get_interview_summary(db: Session) -> IntEvaSummaryListResponse:
     return IntEvaSummaryListResponse(intEva=response_list)
 
 
-def get_all_int_slot(db: Session) -> list[AllIntEvaResponse]:
-    # Query only the needed fields and filter out None values
+def get_all_int_slot(db: Session) -> List[AllIntEvaResponse]:
+    # Perform a join between InterviewEvaluation and InterviewRound
     result = db.query(
         InterviewEvaluation.interviewRoundId,
         InterviewEvaluation.interviewRoom,
-        InterviewEvaluation.interviewTime
+        InterviewEvaluation.interviewTime,
+        InterviewRound.startTime,
+        InterviewRound.endTime,
+        InterviewRound.duration,
+    ).join(
+        InterviewRound,
+        InterviewEvaluation.interviewRoundId == InterviewRound.interviewRoundId
     ).filter(
         InterviewEvaluation.educationId == None,
         InterviewEvaluation.interviewRoundId != None,
@@ -1114,17 +1146,28 @@ def get_all_int_slot(db: Session) -> list[AllIntEvaResponse]:
         InterviewEvaluation.interviewTime != None,
     ).all()
 
-    # Group by (interviewRoundId, interviewRoom)
+    # Group by (interviewRoundId, interviewRoom, startTime, endTime, duration)
     grouped = defaultdict(set)
-    for round_id, room, time in result:
-        grouped[(round_id, room)].add(time)
+    metadata = {}
+
+    for round_id, room, time, start, end, duration in result:
+        key = (round_id, room)
+        grouped[key].add(time)
+        metadata[key] = {
+            "startTime": start,
+            "endTime": end,
+            "duration": duration,
+        }
 
     # Convert to list of schema objects
     response = [
         AllIntEvaResponse(
             interviewRoundId=round_id,
             interviewRoom=room,
-            interviewTime=sorted(list(times))  # sort optional
+            interviewTime=sorted(list(times)),
+            startTime=metadata[(round_id, room)]["startTime"],
+            endTime=metadata[(round_id, room)]["endTime"],
+            duration=metadata[(round_id, room)]["duration"],
         )
         for (round_id, room), times in grouped.items()
     ]
