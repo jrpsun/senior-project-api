@@ -104,7 +104,7 @@ def applicant_login(response: Response, db: Session, idNumber: str, password: st
 
     access_token = create_token(
         data={"sub": user.firstnameEN + " " + user.lastnameEN, "appId": user.applicantId},
-        expires_delta=timedelta(minutes=60)
+        expires_delta=timedelta(days=1)
     )
 
     refresh_token = create_token(
