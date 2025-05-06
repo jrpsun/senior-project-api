@@ -311,7 +311,7 @@ def update_interview_eva_to_applicant(db: Session, app_id: str, com_id: str, adm
         admissionStatus = "06 - รอสัมภาษณ์"
 
     elif len(non_null_results) < len(results):
-        interviewStatus = "06 - รอผลการประเมิน"
+        interviewStatus = "06 - รอผลการพิจารณา"
         admissionStatus = "06 - รอสัมภาษณ์"
 
     else:

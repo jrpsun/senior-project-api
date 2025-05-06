@@ -156,6 +156,7 @@ class InterviewRoundResponse(BaseModel):
     startTime: Optional[str] = None
     endTime: Optional[str] = None
     duration: Optional[str] = None
+    interviewRoomNumber: Optional[int] = None
 
 
 class InterviewRoundListResponse(BaseModel):
@@ -305,6 +306,8 @@ class SummaryInterviewPageResponse(BaseModel):
 
     InterviewCommittee: list[CommitteeResult] = []
 
+    interviewRoundId: Optional[str] = None
+
 
 
 class SummaryInterviewListPageResponse(BaseModel):
@@ -340,7 +343,7 @@ class TESTEduInterviewEvaListResponse(BaseModel):
     applicants: list[TESTEduInterviewEvaResponse]'''
 
 
-class InterviewRoundResponse(BaseModel):
+'''class InterviewRoundResponse(BaseModel):
     interviewRoundId: Optional[str] = None
     admissionProgram: Optional[str] = None
     admissionRoundName: Optional[str] = None
@@ -351,7 +354,7 @@ class InterviewRoundResponse(BaseModel):
 
 
 class InterviewRoundListResponse(BaseModel):
-    interviewRound: list[InterviewRoundResponse]
+    interviewRound: list[InterviewRoundResponse]'''
 
 
 class InterviewRoundUpdate(BaseModel):
@@ -524,3 +527,6 @@ class AllIntEvaResponse(BaseModel):
     interviewRoundId: Optional[str] = None
     interviewRoom: Optional[str] = None
     interviewTime: list[str]
+    startTime: Optional[str] = None
+    endTime: Optional[str] = None
+    duration: Optional[str] = None
