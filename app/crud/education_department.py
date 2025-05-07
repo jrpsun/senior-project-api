@@ -264,7 +264,7 @@ def get_all_admins_manage_role_page(db: Session):
 
     return AdminRoleListPageResponse(admins=admin_list)
 
-# interview summary page
+# interview tracking page
 def get_all_applicant_summary_interview_page(db: Session):
     query = (
         db.query(
@@ -373,6 +373,63 @@ def get_all_applicant_summary_interview_page(db: Session):
 
     return SummaryInterviewListPageResponse(applicants=response_list)
 
+
+def get_summary_interview_list(db: Session) -> SummaryInterviewListPageResponse:
+    results = []
+
+    # Always base on ApplicantGeneralInformation
+    applicant_infos = db.query(ApplicantGeneralInformation).all()
+
+    for info in applicant_infos:
+        applicant_id = info.applicantId
+        program_registered = info.programRegistered
+
+        applicant = db.query(ApplicantRegistrations).filter_by(applicantId=applicant_id).first()
+        admission = db.query(Admission).filter_by(admissionId=program_registered).first()
+        status = db.query(ApplicantStatus).filter_by(applicantId=applicant_id, programRegistered=program_registered).first()
+        evaluations = db.query(InterviewEvaluation).filter_by(applicantId=applicant_id, programRegistered=program_registered).all()
+
+        # If there are evaluations, return all InterviewCommittee results
+        interview_committee = []
+        for evaluation in evaluations:
+            com = db.query(InterviewCommittee).filter_by(interviewComId=evaluation.interviewComId).first()
+            if com:
+                interview_committee.append(CommitteeResult(
+                    id=com.interviewComId,
+                    shortName=f"อ. {com.firstName}",
+                    name=f"{com.prefix}{com.firstName} {com.lastName}",
+                    InterviewResult=evaluation.interviewResult
+                ))
+
+        results.append(SummaryInterviewPageResponse(
+            interviewStatus=status.interviewStatus if status else None,
+            admissionStatus=status.admissionStatus if status else None,
+            docStatus=status.docStatus if status else None,
+            paymentStatus=status.paymentStatus if status else None,
+
+            interviewRoom=evaluations[0].interviewRoom if evaluations else None,
+            interviewDate=evaluations[0].interviewDate if evaluations else None,
+            interviewTime=evaluations[0].interviewTime if evaluations else None,
+
+            englishScore=None,
+            personalityScore=None,
+            intensionScore=None,
+            computerScore=None,
+            totalScore=None,
+
+            applicantId=applicant_id,
+            firstnameTH=applicant.firstnameTH if applicant else None,
+            lastnameTH=applicant.lastnameTH if applicant else None,
+            fullnameTH=f"{applicant.prefix}{applicant.firstnameTH}{applicant.lastnameTH}" if applicant else None,
+            programRegistered=program_registered,
+
+            program=admission.program if admission else None,
+            roundName=admission.roundName if admission else None,
+            InterviewCommittee=interview_committee,
+            interviewRoundId=evaluations[0].interviewRoundId if evaluations else None
+        ))
+
+    return SummaryInterviewListPageResponse(applicants=results)
 
 
 

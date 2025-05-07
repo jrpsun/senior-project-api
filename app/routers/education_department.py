@@ -82,6 +82,11 @@ def get_sum_app_interview(db: Session = Depends(get_db)):
     return get_sum_app_interview
 
 
+@router.get("/applicants-interview-grouping", response_model=SummaryInterviewListPageResponse)
+def get_applicants_interview_grouping(db: Session = Depends(get_db)):
+    return crud.get_summary_interview_list(db)
+
+
 @router.get("/get-applicant-interview-eva/{applicant_id}/{committee_id}", response_model=EduInterviewEvaListResponse)
 def get_applicant_interview_eva(applicant_id: str, committee_id: Optional[str] = None, db: Session = Depends(get_db)):
     get_applicant_interview_eva = crud.get_all_applicant_result_interview_eva_page(db, applicant_id, committee_id)

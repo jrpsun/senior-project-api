@@ -695,10 +695,10 @@ def process_is_applicant_complete(db: Session, appId: str, admId: str):
             return {"isComplete": False, "missing": "Education Information not found"}
         
     if academic.currentStatus == "graduated" and not academic.graduateDate:
-        return {"isComplete": False, "missing": "Education Information not found"}
+        return {"isComplete": False, "missing": "Education Information not found 2"}
 
     if not academic or not academic.currentStatus or not academic.docCopyTrans or not academic.studyPlan or not academic.cumulativeGPA:
-        return {"isComplete": False, "missing": "Education Information not found"}
+        return {"isComplete": False, "missing": "Education Information not found 3"}
     
 
     document = db.query(ApplicantAdditionalDocuments).filter_by(
