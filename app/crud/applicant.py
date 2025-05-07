@@ -610,7 +610,9 @@ def get_applicant_follow_status(db: Session, appId: str):
         item = {
             "admissionId": admission.admissionId,
             "course": f"{admission.program} {admission.roundName} {admission.academicYear}",
-            "period": f"{admission.startDate} - {admission.endDate}",
+            "program": admission.program,
+            "startDate": admission.startDate,
+            "endDate": admission.endDate,
             "applicant_number": general.applicant_number,
             "admissionStatus": status.admissionStatus,
             "docStatus": status.docStatus,
@@ -688,8 +690,9 @@ def process_is_applicant_complete(db: Session, appId: str, admId: str):
     ).first()
 
 
-    if "DST" in admission.program and not academic or not academic.dstEnglish or not academic.dstMathematics or not academic.dstScitech:
-        return {"isComplete": False, "missing": "Education Information not found"}
+    if "ITDS/B" in admission.program:
+        if not academic or not academic.dstEnglish or not academic.dstMathematics or not academic.dstScitech:
+            return {"isComplete": False, "missing": "Education Information not found"}
         
     if academic.currentStatus == "graduated" and not academic.graduateDate:
         return {"isComplete": False, "missing": "Education Information not found"}
