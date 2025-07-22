@@ -418,9 +418,9 @@ def get_summary_interview_list(db: Session) -> SummaryInterviewListPageResponse:
             totalScore=None,
 
             applicantId=applicant_id,
-            firstnameTH=applicant.firstnameTH if applicant else None,
-            lastnameTH=applicant.lastnameTH if applicant else None,
-            fullnameTH=f"{applicant.prefix}{applicant.firstnameTH}{applicant.lastnameTH}" if applicant else None,
+            firstnameEN=applicant.firstnameTH if applicant else None,
+            lastnameEN=applicant.lastnameTH if applicant else None,
+            fullnameEN=f"{applicant.prefix}{applicant.firstnameTH}{applicant.lastnameTH}" if applicant else None,
             programRegistered=program_registered,
 
             program=admission.program if admission else None,
